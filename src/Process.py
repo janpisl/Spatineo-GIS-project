@@ -50,9 +50,8 @@ class Process():
 		for child in root:
 			for child1 in child:
 
-				#print(child1.tag)
-				#why is simple child1.tag printing nonsense? 
-				print(child1.tag.split('}', 1)[1])
+				print(child1.tag)
+				#print(child1.tag.split('}', 1)[1])
 		
 		# Quickfix before we implement this
 		bbox = [192328.204900, 6639377.660400, 861781.306600, 7822120.847100]
