@@ -5,7 +5,7 @@
 	- how to set width and height? Depends on resolution; that is something we decide once for the entire project? For now, yes. Then:
 		- width, height = bbox(x, y)/resolution
 			- if we want res 1px = 2*2km and the bbox is 1000*1000km,
-				then its 1000/2 for both width and height 
+				then its 1000/2 for both width and height
 		- but perhaps in the future, width and height could be fixed and resolution dynamic, because if the bbox is smaller, it is reasonable to operate with smaller pixels
 
 '''
@@ -19,7 +19,7 @@ import configparser
 
 
 class Process():
-	
+
 	def __init__(self, cfg):
 		self.response_file_path = cfg.get('data', 'response_file')
 		self.get_capabilities = cfg.get('data', 'get_capabilities')
@@ -37,23 +37,32 @@ class Process():
 
 
 	def get_layer_bbox(self, layer_name, crs):
+    	''' Here comes the short description what the method do.
+
+			args:
+				layer_name: Layer name of the service
+				crs: the coordinate reference system (EPSG code)
+			returns:
+				bbox: bounding box (array) of the service
+		'''
+
 		'''TODO: implement this function to actually look in the xml, i.e.
-				 find the appropriate child by layer_name (so where someChildNode.nodeValue == layer_name, 
+				 find the appropriate child by layer_name (so where someChildNode.nodeValue == layer_name,
 				 then find the bbox values for our crs (bounding box tag where CRS = crs)
 				 This is what we want:
 		 		<BoundingBox CRS="EPSG:3067" minx="192328.204900" miny="6639377.660400" maxx="861781.306600" maxy="7822120.847100"/>
 
 		for a start, this is how to parse an xml:
-		'''	
+		'''
 		tree = ET.parse(self.get_capabilities)
 		root = tree.getroot()
 		for child in root:
 			for child1 in child:
 
 				#print(child1.tag)
-				#why is simple child1.tag printing nonsense? 
+				#why is simple child1.tag printing nonsense?
 				print(child1.tag.split('}', 1)[1])
-		
+
 		# Quickfix before we implement this
 		bbox = [192328.204900, 6639377.660400, 861781.306600, 7822120.847100]
 
