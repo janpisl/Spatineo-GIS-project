@@ -11,6 +11,8 @@
 '''
 
 import rasterio
+import numpy as np
+from math import floor, ceil
 import xml.etree.ElementTree as ET
 import pdb
 import json
@@ -69,36 +71,56 @@ class Process():
 
 
 	def create_empty_raster(self, output_name, height, width, crs, bbox, driver='GTiff'):
-		'''TODO: implement this
+		''' This function creates an empty raster file with the provided parametres.
+		args:
+			output_name: the path where the dataset will be created
+			height: the height of the new file in pixels
+			width: the width of the new file in pixels
+			crs: coordinate reference system which will be used, (e.g. EPSG:3067)
+			bbox: bounding box [minx, miny, maxx, maxy]
+			driver: GDAL raster driver to create datasets
+		returns: the path where the dataset was created (the same as output_name)
 		'''
-		pass
+		# TODO: Since we have to update the dataset reguraly, it would be good
+		# to create a separated helper class for raster data handling!
 
+		# Round up or down to the nearest kilometer.
+		# Assume now that the unit is a meter!
+		minx = floor(bbox[0]/1000) * 1000
+		miny = floor(bbox[1]/1000) * 1000
+		maxx = ceil(bbox[2]/1000) * 1000
+		maxy = ceil(bbox[3]/1000) * 1000
 
+		# Calculate height and width. 
+		# Note, the meaning of x and y changes between crs! Now, width = x, height = y
+		width = maxx - minx
+		height = maxy - miny
+		data = np.zeros(shape=(height, width))
 
+		transform = rasterio.transform.from_origin(minx, maxy, 1000, 1000)
 
+		# Create new dataset
+		dataset = rasterio.open(
+			output_name,
+			'w', # Write mode
+			driver=driver,
+			height=height,
+			width=width,
+			count=1,
+			dtype=str(data.dtype),
+			crs=crs,
+			transform=transform,
+		)
+
+		dataset.write(data, 1)
+		dataset.close()
+
+		return output_name
 
 
 
 
 #TODO: access req_layer_name in the xml; get the bbox; create a raster;
-
-
-'''
-new_dataset = rasterio.open(
-    '/tmp/new.tif',
-    'w',
-    driver='GTiff',
-    height=Z.shape[0],
-    width=Z.shape[1],
-    count=1,
-    dtype=Z.dtype,
-    crs='+proj=latlong',
-    transform=transform,
- )
-
-'''
-
-
 
 
 if __name__ == '__main__':
