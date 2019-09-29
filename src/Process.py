@@ -26,7 +26,7 @@ class Process():
 		self.requests = self.load_requests(self.response_file_path)
 		self.crs = self.requests['layerKey']['crs']
 		self.layer_name = self.requests['layerKey']['layerName']
-		self.layer_bbox = self.get_layer_bbox(self.layer_name)
+		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs)
 
 
 	def load_requests(self, path):
@@ -37,7 +37,7 @@ class Process():
 
 
 	def get_layer_bbox(self, layer_name, crs):
-    	''' Here comes the short description what the method do.
+		''' Here comes the short description what the method do.
 
 			args:
 				layer_name: Layer name of the service
@@ -101,9 +101,7 @@ new_dataset = rasterio.open(
 
 
 
-
-
-if name == '__main__':
+if __name__ == '__main__':
 	config = configparser.ConfigParser()
 	#TODO: give ini file as an argument
 	cfg = config.read("process.ini")
