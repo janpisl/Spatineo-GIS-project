@@ -9,6 +9,7 @@
 		- but perhaps in the future, width and height could be fixed and resolution dynamic, because if the bbox is smaller, it is reasonable to operate with smaller pixels
 
 '''
+# Renee test commit
 
 import rasterio
 import numpy as np
