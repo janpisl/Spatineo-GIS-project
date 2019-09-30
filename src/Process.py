@@ -18,19 +18,20 @@ import xml.etree.ElementTree as ET
 import pdb
 import json
 import configparser
+
 #pdb.set_trace()
 
 
 class Process():
 
 	def __init__(self, cfg):
-		self.response_file_path = cfg.get('data', 'response_file')
-		self.get_capabilities = cfg.get('data', 'get_capabilities')
+		self.response_file_path = 'converted_example_service.txt'
+		#self.response_file_path = cfg.get('data', 'response_file')
+		self.get_capabilities = 'WmsServer-service-5.xml'
 		self.requests = self.load_requests(self.response_file_path)
 		self.crs = self.requests['layerKey']['crs']
-		self.layer_name = self.requests['layerKey']['layerName']
+		self.layer_name = self.requests['layerKey']['layerName']		
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs)
-
 
 	def load_requests(self, path):
 		with open(path) as source:
@@ -57,16 +58,23 @@ class Process():
 
 		for a start, this is how to parse an xml:
 		'''
+
+
 		tree = ET.parse(self.get_capabilities)
 		root = tree.getroot()
-		for child in root:
-			for child1 in child:
 
-				print(child1.tag)
-				#print(child1.tag.split('}', 1)[1])
-		
-		# Quickfix before we implement this
-		bbox = [192328.204900, 6639377.660400, 861781.306600, 7822120.847100]
+		layer = False
+		for element in root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/'):
+			
+			if element.text == self.layer_name:
+				layer = True
+
+			if element.tag == '{http://www.opengis.net/wms}BoundingBox' and element.attrib['CRS'] == self.crs and layer:
+				bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
+
+				for item in range(len(bbox)):
+					bbox[item] = float(bbox[item])
+		#bbox = [192328.204900, 6639377.660400, 861781.306600, 7822120.847100]
 
 		return bbox
 
@@ -131,8 +139,9 @@ class Process():
 if __name__ == '__main__':
 	config = configparser.ConfigParser()
 	#TODO: give ini file as an argument
-	cfg = config.read("process.ini")
-	process = Process(cfg)
+	config.read("process.ini")
+	process = Process(config)
+	
 
 
 
