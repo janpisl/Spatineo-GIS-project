@@ -91,15 +91,18 @@ class Process():
 		maxx = ceil(bbox[2]/1000) * 1000
 		maxy = ceil(bbox[3]/1000) * 1000
 
-		# Calculate height and width. 
-		# Note, the meaning of x and y changes between crs! Now, width = x, height = y
-		width = maxx - minx
-		height = maxy - miny
+		# Calculate the scale
+		# Note, the meaning of x and y changes between crs! Now, width = x, height = y. Make this more robust at some point.
+		scalex = (maxx - minx) / width
+		scaley = (maxy - miny) / height
+
+		# This ties spatial coordinates and image coordinates together.
+		transform = rasterio.transform.from_origin(minx, maxy, scalex, scaley)
+
+		# Init raster with zeros.
 		data = np.zeros(shape=(height, width))
 
-		transform = rasterio.transform.from_origin(minx, maxy, 1000, 1000)
-
-		# Create new dataset
+		# Create new dataset file
 		dataset = rasterio.open(
 			output_name,
 			'w', # Write mode
@@ -112,6 +115,7 @@ class Process():
 			transform=transform,
 		)
 
+		# Write numpy matrix to the dataset.
 		dataset.write(data, 1)
 		dataset.close()
 
