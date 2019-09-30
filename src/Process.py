@@ -25,9 +25,9 @@ import configparser
 class Process():
 
 	def __init__(self, cfg):
-		self.response_file_path = 'converted_example_service.txt'
-		#self.response_file_path = cfg.get('data', 'response_file')
-		self.get_capabilities = 'WmsServer-service-5.xml'
+		#self.response_file_path = 'converted_example_service.txt'
+		self.response_file_path = cfg.get('data', 'response_file')
+		self.get_capabilities = cfg.get('data', 'get_capabilities')
 		self.requests = self.load_requests(self.response_file_path)
 		self.crs = self.requests['layerKey']['crs']
 		self.layer_name = self.requests['layerKey']['layerName']		
@@ -49,16 +49,6 @@ class Process():
 			returns:
 				bbox: bounding box (array) of the service
 		'''
-
-		'''TODO: implement this function to actually look in the xml, i.e.
-				 find the appropriate child by layer_name (so where someChildNode.nodeValue == layer_name,
-				 then find the bbox values for our crs (bounding box tag where CRS = crs)
-				 This is what we want:
-		 		<BoundingBox CRS="EPSG:3067" minx="192328.204900" miny="6639377.660400" maxx="861781.306600" maxy="7822120.847100"/>
-
-		for a start, this is how to parse an xml:
-		'''
-
 
 		tree = ET.parse(self.get_capabilities)
 		root = tree.getroot()
@@ -132,16 +122,10 @@ class Process():
 
 
 
-
-#TODO: access req_layer_name in the xml; get the bbox; create a raster;
-
-
 if __name__ == '__main__':
 	config = configparser.ConfigParser()
 	#TODO: give ini file as an argument
-	config.read("process.ini")
+	config.read("/home/jan/Documents/Aalto/Spatineo_Project/Spatineo-GIS-project/sample_data/process.ini")
+
 	process = Process(config)
 	
-
-
-
