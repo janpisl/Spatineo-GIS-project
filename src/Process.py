@@ -51,6 +51,7 @@ class Process():
 			returns:
 				bbox: bounding box (array) of the service
 		'''
+		bbox = None
 
 		tree = ET.parse(self.get_capabilities)
 		root = tree.getroot()
@@ -67,6 +68,9 @@ class Process():
 				for item in range(len(bbox)):
 					bbox[item] = float(bbox[item])
 		#bbox = [192328.204900, 6639377.660400, 861781.306600, 7822120.847100]
+
+		if not bbox:
+			raise Exception("Bounding box information didn't found for the layer.")
 
 		return bbox
 
