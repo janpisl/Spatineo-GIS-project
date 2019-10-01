@@ -1,5 +1,5 @@
 
-
+from geojson import Polygon
 class Algorithm():
 	def __init__(raster, responses, service):
 		'''
@@ -12,6 +12,22 @@ class Algorithm():
 		self.responses = responses
 		self.mode = mode
 		
+	def parse_responses_to_geojson(self, responses):
+		''' This method converts response file to geojson geometries. imageAnalysisResult is included to the geojson features.
+		args:
+			responses: parsed response file
+		returns: list of geojson elements
+		'''
+		features = []
+		for res in responses['results']:
+			# Convert bbox as a list.
+			bbox = list(map(float, res['bBox'].split(',')))
+			# Create a closed Polygon following the edges of the bbox.
+			feat = Polygon([(bbox[0], bbox[1]), (bbox[0], bbox[3]), (bbox[2], bbox[3]), (bbox[2], bbox[1]), (bbox[0], bbox[1])])
+			# Store imageTestResult to the feature.
+			feat['imageTestResult'] = res['imageAnalysisResult']
+			features.append(feat)
+		return features
 
 
 	def solve(self):
