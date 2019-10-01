@@ -18,6 +18,7 @@ import xml.etree.ElementTree as ET
 import pdb
 import json
 import configparser
+import argparse
 
 #pdb.set_trace()
 
@@ -124,9 +125,13 @@ class Process():
 
 
 if __name__ == '__main__':
-	config = configparser.ConfigParser()
-	#TODO: give ini file as an argument
-	config.read("/home/jan/Documents/Aalto/Spatineo_Project/Spatineo-GIS-project/sample_data/process.ini")
+	parser = argparse.ArgumentParser()
+	parser.add_argument("path_to_config", help="Path to the file containing configuration.")
+	args = parser.parse_args()
 
+	config = configparser.ConfigParser()
+	data = config.read(args.path_to_config)
+	if len(data) == 0:
+		raise Exception("Configuration file did not found.")
 	process = Process(config)
 	
