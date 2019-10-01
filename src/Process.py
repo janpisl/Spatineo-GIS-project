@@ -32,6 +32,7 @@ class Process():
 		self.crs = self.requests['layerKey']['crs']
 		self.layer_name = self.requests['layerKey']['layerName']		
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs)
+		self.raster = self.create_empty_raster('../../tmp.tif', self.crs, self.layer_bbox)
 
 	def load_requests(self, path):
 		with open(path) as source:
@@ -69,7 +70,7 @@ class Process():
 		return bbox
 
 
-	def create_empty_raster(self, output_name, height, width, crs, bbox, driver='GTiff'):
+	def create_empty_raster(self, output_name, crs, bbox, resolution=1000, driver='GTiff'):
 		''' This function creates an empty raster file with the provided parametres.
 		args:
 			output_name: the path where the dataset will be created
@@ -85,18 +86,18 @@ class Process():
 
 		# Round up or down to the nearest kilometer.
 		# Assume now that the unit is a meter!
-		minx = floor(bbox[0]/1000) * 1000
-		miny = floor(bbox[1]/1000) * 1000
-		maxx = ceil(bbox[2]/1000) * 1000
-		maxy = ceil(bbox[3]/1000) * 1000
+		minx = floor(bbox[0]/resolution) * resolution
+		miny = floor(bbox[1]/resolution) * resolution
+		maxx = ceil(bbox[2]/resolution) * resolution
+		maxy = ceil(bbox[3]/resolution) * resolution
 
 		# Calculate the scale
 		# Note, the meaning of x and y changes between crs! Now, width = x, height = y. Make this more robust at some point.
-		scalex = (maxx - minx) / width
-		scaley = (maxy - miny) / height
+		width = int((maxx - minx) / resolution)
+		height = int((maxy - miny) / resolution)
 
 		# This ties spatial coordinates and image coordinates together.
-		transform = rasterio.transform.from_origin(minx, maxy, scalex, scaley)
+		transform = rasterio.transform.from_origin(minx, maxy, resolution, resolution)
 
 		# Init raster with zeros.
 		data = np.zeros(shape=(height, width))
