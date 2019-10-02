@@ -1,6 +1,6 @@
 # editor files
 .vscode
-
+process.ini
 
 # .gitignore template for Python project from github/gitignore -repo (license CC0)
 
