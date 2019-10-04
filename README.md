@@ -23,7 +23,7 @@ The configuration should have following variables:
 - `response_file`: Path to the file containing monitoring results. 
 - `get_capabilities`: Path to the GetCapabilities-response file. 
 
-See the example file [process.ini](sample_data/process.ini).
+See the example file [example.ini](sample_data/example.ini).
 
 
 Call the script:
