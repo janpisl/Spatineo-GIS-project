@@ -20,6 +20,7 @@ import json
 import configparser
 import argparse
 
+from Algorithm import Algorithm
 #pdb.set_trace()
 
 
@@ -34,6 +35,7 @@ class Process():
 		self.layer_name = self.requests['layerKey']['layerName']		
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs)
 		self.raster = self.create_empty_raster('../../tmp.tif', self.crs, self.layer_bbox)
+		self.output_raster_path = cfg.get('data', 'raster_output_path')
 
 	def load_requests(self, path):
 		with open(path) as source:
@@ -112,6 +114,8 @@ class Process():
 			output_name,
 			'w', # Write mode
 			driver=driver,
+			# the no data value must be set because, the actual value doesnt matter AFAIK
+			nodata = -99,
 			height=height,
 			width=width,
 			count=1,
@@ -126,6 +130,13 @@ class Process():
 
 		return output_name
 
+	#TODO: actually get WMS/WFS value from get_capabilities or json
+	def run_algorithm(self):
+
+		a = Algorithm(self.raster, self.requests, "WMS")
+		return a.solve(self.output_raster_path)
+
+
 
 
 if __name__ == '__main__':
@@ -138,4 +149,6 @@ if __name__ == '__main__':
 	if len(data) == 0:
 		raise Exception("Configuration file did not found.")
 	process = Process(config)
+
+	print("Process successfully finished. Output raster has been written to a location specified in your ini file.")
 	
