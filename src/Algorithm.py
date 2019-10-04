@@ -87,10 +87,10 @@ class Algorithm():
 if __name__ == '__main__':
 
 	# This is an example how we can run the algorithm separately (without Process.py) if we need to.
-	empty_raster = rasterio.open("../../tmp.tif")
+	empty_raster = "../../tmp.tif"
 	responses_path = "/home/jan/Documents/Aalto/Spatineo_Project/spatineo-aalto/converted_example_service.txt"
 	with open(responses_path) as source:
 		requests = json.load(source)
 
 	alg = Algorithm(empty_raster,requests, "WMS")
-	raster = alg.solve("../../output_tmp.tif")
+	raster = alg.solve("../../ousdftput_tmp.tif")

@@ -35,7 +35,10 @@ class Process():
 		self.layer_name = self.requests['layerKey']['layerName']		
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs)
 		self.raster = self.create_empty_raster('../../tmp.tif', self.crs, self.layer_bbox)
-		self.output_raster_path = cfg.get('data', 'raster_output_path')
+		try: 
+			self.output_raster_path = cfg.get('data', 'raster_output_path')
+		except:
+			self.output_raster_path = '../../out.tif'
 
 	def load_requests(self, path):
 		with open(path) as source:
@@ -150,5 +153,6 @@ if __name__ == '__main__':
 		raise Exception("Configuration file did not found.")
 	process = Process(config)
 
-	print("Process successfully finished. Output raster has been written to a location specified in your ini file.")
+	process.run_algorithm()
+	#print("Process successfully finished. Output raster has been written to a location specified in your ini file.")
 	
