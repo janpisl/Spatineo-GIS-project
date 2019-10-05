@@ -31,8 +31,9 @@ class Process():
 		self.response_file_path = cfg.get('data', 'response_file')
 		self.get_capabilities = cfg.get('data', 'get_capabilities')
 		self.requests = self.load_requests(self.response_file_path)
-		self.crs = self.requests['layerKey']['crs']
-		self.layer_name = self.requests['layerKey']['layerName']		
+		self.crs = self.requests[0]['layerKey']['crs']
+		self.layer_name = self.requests[0]['layerKey']['layerName']	
+		print(self.layer_name)
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs)
 		self.raster = self.create_empty_raster('../../tmp.tif', self.crs, self.layer_bbox)
 		try: 
@@ -73,6 +74,7 @@ class Process():
 				for item in range(len(bbox)):
 					bbox[item] = float(bbox[item])
 		#bbox = [192328.204900, 6639377.660400, 861781.306600, 7822120.847100]
+		#print(bbox)
 
 		if not bbox:
 			raise Exception("Bounding box information didn't found for the layer.")

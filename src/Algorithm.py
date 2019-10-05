@@ -28,7 +28,7 @@ class Algorithm():
 		returns: list of geojson elements
 		'''
 		features = []
-		for res in responses['results']:
+		for res in responses[0]['results']:
 			# Convert bbox as a list.
 			bbox = list(map(float, res['bBox'].split(',')))
 			# Create a closed Polygon following the edges of the bbox.
