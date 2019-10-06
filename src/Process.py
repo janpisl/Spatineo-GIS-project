@@ -49,7 +49,9 @@ class Process():
 
 
 	def get_layer_bbox(self, layer_name, crs):
-		''' Here comes the short description what the method do.
+		''' The fuction parses the GetCapabilities XML document retrieved in _init_ function in order to search for a 'global' bbox to use. 
+			It retrieves the bbox from the GetCapabilties document by finding the tag of the current request where it finds the bbox with correct CRS. 
+			 
 
 			args:
 				layer_name: Layer name of the service
@@ -57,25 +59,35 @@ class Process():
 			returns:
 				bbox: bounding box (array) of the service
 		'''
+		# TODO: It must be able to do both WMS and WFS as well as work with different types of XML document setups.
+		
+		# init
 		bbox = None
+		layer = False
 
+		# parsing the XML document to the the root (setup) of the document
 		tree = ET.parse(self.get_capabilities)
 		root = tree.getroot()
 
-		layer = False
+		# searching the XML document for the tag with the correct request name
 		for element in root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/'):
 			
+			# change layer to true if the request is found
 			if element.text == self.layer_name:
 				layer = True
 
+			# retrieve the bbox when the contrains are upheld
 			if element.tag == '{http://www.opengis.net/wms}BoundingBox' and element.attrib['CRS'] == self.crs and layer:
 				bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
 
+				# change from strings to float
 				for item in range(len(bbox)):
 					bbox[item] = float(bbox[item])
+
 		#bbox = [192328.204900, 6639377.660400, 861781.306600, 7822120.847100]
 		#print(bbox)
 
+		# throww exception if the bbox is not found
 		if not bbox:
 			raise Exception("Bounding box information didn't found for the layer.")
 
