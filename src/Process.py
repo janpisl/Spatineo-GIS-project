@@ -30,8 +30,7 @@ class Process():
 		self.response_file_path = cfg.get('data', 'response_file')
 		self.get_capabilities = cfg.get('data', 'get_capabilities')
 		self.requests = self.load_requests(self.response_file_path)
-		#self.crs = self.requests[0]['layerKey']['crs'] #not working for WFS - GetCapabilities retrieve BoundingBox coordinates in WGS84 (EPSG: 4326), not in default CRS (e.g. 25833) 
-		self.crs = 4326
+		self.crs = self.requests[0]['layerKey']['crs'] #not working for WFS - GetCapabilities retrieve BoundingBox coordinates in WGS84 (EPSG: 4326), not in default CRS (e.g. 25833) 
 		self.layer_name = self.requests[0]['layerKey']['layerName']	
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs)
 		self.raster = self.create_empty_raster('../../tmp.tif', self.crs, self.layer_bbox)
@@ -94,7 +93,7 @@ class Process():
 
 		# throww exception if the bbox is not found
 		if not bbox:
-			raise Exception("Bounding box information didn't found for the layer.")
+			raise Exception("Bounding box information not found for the layer.")
 		"""
 		bbox =[11.9936108555477, 54.0486077396211, 12.3044984617793, 54.2465934706281]
 
@@ -169,7 +168,7 @@ if __name__ == '__main__':
 	config = configparser.ConfigParser()
 	data = config.read(args.path_to_config)
 	if len(data) == 0:
-		raise Exception("Configuration file did not found.")
+		raise Exception("Configuration file not found.")
 	process = Process(config)
 
 	process.run_algorithm()
