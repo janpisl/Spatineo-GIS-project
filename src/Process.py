@@ -31,7 +31,8 @@ class Process():
 		self.response_file_path = cfg.get('data', 'response_file')
 		self.get_capabilities = cfg.get('data', 'get_capabilities')
 		self.requests = self.load_requests(self.response_file_path)
-		self.crs = self.requests[0]['layerKey']['crs']
+		#self.crs = self.requests[0]['layerKey']['crs'] #not working for WFS - GetCapabilities retrieve BoundingBox coordinates in WGS84 (EPSG: 4326), not in default CRS (e.g. 25833) 
+		self.crs = 4326
 		self.layer_name = self.requests[0]['layerKey']['layerName']	
 		print(self.layer_name)
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs)
@@ -49,6 +50,7 @@ class Process():
 
 
 	def get_layer_bbox(self, layer_name, crs):
+		"""
 		''' The fuction parses the GetCapabilities XML document retrieved in _init_ function in order to search for a 'global' bbox to use. 
 			It retrieves the bbox from the GetCapabilties document by finding the tag of the current request where it finds the bbox with correct CRS. 
 			 
@@ -90,6 +92,8 @@ class Process():
 		# throww exception if the bbox is not found
 		if not bbox:
 			raise Exception("Bounding box information didn't found for the layer.")
+		"""
+		bbox =[11.9936108555477, 54.0486077396211, 12.3044984617793, 54.2465934706281]
 
 		return bbox
 
@@ -150,9 +154,11 @@ class Process():
 	#TODO: actually get WMS/WFS value from get_capabilities or json
 	def run_algorithm(self):
 
-		a = Algorithm(self.raster, self.requests, "WMS")
+		#a = Algorithm(self.raster, self.requests, "WMS")
+		a = Algorithm(self.raster, self.requests, "WFS")
 		return a.solve(self.output_raster_path)
 
+print(rasterio.__version__)
 
 
 

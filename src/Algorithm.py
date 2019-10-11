@@ -13,7 +13,7 @@ class Algorithm():
 		'''
 		args:
 			raster = empty raster
-			data_file = a list of responses ('results' in the data file) for one layer key
+			responses = a list of responses ('results' in the data file) for one layer key
 			service = WMS/WFS
 		'''	
 		self.raster = rasterio.open(raster)
@@ -92,5 +92,6 @@ if __name__ == '__main__':
 	with open(responses_path) as source:
 		requests = json.load(source)
 
-	alg = Algorithm(empty_raster,requests, "WMS")
+	#alg = Algorithm(empty_raster,requests, "WMS")
+	alg = Algorithm(empty_raster,requests, "WFS")
 	raster = alg.solve("../../ousdftput_tmp.tif")
