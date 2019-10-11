@@ -39,7 +39,7 @@ class Algorithm():
 		return features
 
 
-	def solve(self, output_path):
+	def solve(self, output_path, bin_output_path):
 		band1 = self.raster.read()
 		band_out = np.copy(band1)
 		for feat in self.features:
@@ -63,9 +63,8 @@ class Algorithm():
 			#if i == 1000:
 			#    ref_image_out = ref_image
 			#i = i + 1
-		#pdb.set_trace()
-
-		# Save the image into disk.        
+		
+		# Save the image into disk.     
 		img_output = rasterio.open(
 			output_path,
 			'w',
@@ -80,6 +79,27 @@ class Algorithm():
 		img_output.write(band_out)
 		img_output.close()
 
+		#TODO: replace this with something sensible
+		threshold = 20
+
+		aux_raster = np.copy(band_out)
+		binary_raster = aux_raster > threshold
+
+		# Save the image into disk.        
+		bin_output = rasterio.open(
+			bin_output_path,
+			'w',
+			nbits = 1,
+			driver='GTiff',
+			nodata=99,
+			height=self.raster.height,
+			width = self.raster.width,
+			count=1,
+			dtype = 'uint8',
+			crs=self.raster.crs,
+			transform=self.raster.transform,)   
+		bin_output.write(binary_raster.astype(np.uint8))
+		bin_output.close()
 
 
 

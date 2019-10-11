@@ -9,7 +9,6 @@
 		- but perhaps in the future, width and height could be fixed and resolution dynamic, because if the bbox is smaller, it is reasonable to operate with smaller pixels
 
 '''
-# Renee test commit
 
 import rasterio
 import numpy as np
@@ -34,13 +33,17 @@ class Process():
 		#self.crs = self.requests[0]['layerKey']['crs'] #not working for WFS - GetCapabilities retrieve BoundingBox coordinates in WGS84 (EPSG: 4326), not in default CRS (e.g. 25833) 
 		self.crs = 4326
 		self.layer_name = self.requests[0]['layerKey']['layerName']	
-		print(self.layer_name)
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs)
 		self.raster = self.create_empty_raster('../../tmp.tif', self.crs, self.layer_bbox)
 		try: 
 			self.output_raster_path = cfg.get('data', 'raster_output_path')
 		except:
 			self.output_raster_path = '../../out.tif'
+		try:
+			self.binary_raster_output_path = cfg.get('data', 'binary_raster_output_path')
+		except:
+			self.output_raster_path = '../../bin_out.tif'
+
 
 	def load_requests(self, path):
 		with open(path) as source:
@@ -154,12 +157,8 @@ class Process():
 	#TODO: actually get WMS/WFS value from get_capabilities or json
 	def run_algorithm(self):
 
-		#a = Algorithm(self.raster, self.requests, "WMS")
 		a = Algorithm(self.raster, self.requests, "WFS")
-		return a.solve(self.output_raster_path)
-
-print(rasterio.__version__)
-
+		return a.solve(self.output_raster_path, self.output_raster_path)
 
 
 if __name__ == '__main__':
