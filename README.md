@@ -23,6 +23,7 @@ The configuration should have following variables:
 - `response_file`: Path to the file containing monitoring results. 
 - `get_capabilities`: Path to the GetCapabilities-response file. 
 - `output_raster_path`: Location where the output raster will be created.
+- `binary_raster_output_path` = Location where the binary raster will be created
 
 See the example file [example.ini](sample_data/example.ini).
 
