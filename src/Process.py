@@ -23,6 +23,7 @@ import argparse
 from Algorithm import Algorithm
 #pdb.set_trace()
 
+from pyproj import Proj, transform
 
 class Process():
 
@@ -31,8 +32,7 @@ class Process():
 		self.response_file_path = cfg.get('data', 'response_file')
 		self.get_capabilities = cfg.get('data', 'get_capabilities')
 		self.requests = self.load_requests(self.response_file_path)
-		#self.crs = self.requests[0]['layerKey']['crs'] #not working for WFS - GetCapabilities retrieve BoundingBox coordinates in WGS84 (EPSG: 4326), not in default CRS (e.g. 25833) 
-		self.crs = 4326
+		self.crs = self.requests[0]['layerKey']['crs'] 
 		self.layer_name = self.requests[0]['layerKey']['layerName']	
 		print(self.layer_name)
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs)
@@ -93,8 +93,15 @@ class Process():
 		if not bbox:
 			raise Exception("Bounding box information didn't found for the layer.")
 		"""
-		bbox =[11.9936108555477, 54.0486077396211, 12.3044984617793, 54.2465934706281]
-
+		
+		bbox0 =[11.9936108555477, 54.0486077396211, 12.3044984617793, 54.2465934706281]
+		inProj = Proj(init='epsg:4326')
+		outProj = Proj(self.crs)
+		#lat1,lon1,lat2,lon2 = bbox0[0],bbox0[1],bbox0[2],bbox0[3]
+		x1,y1 = transform(inProj,outProj,bbox0[0],bbox0[1])
+		x2,y2 = transform(inProj,outProj,bbox0[2],bbox0[3])
+		bbox=[x1,y1,x2,y2]
+		
 		return bbox
 
 
@@ -157,9 +164,6 @@ class Process():
 		#a = Algorithm(self.raster, self.requests, "WMS")
 		a = Algorithm(self.raster, self.requests, "WFS")
 		return a.solve(self.output_raster_path)
-
-print(rasterio.__version__)
-
 
 
 if __name__ == '__main__':
