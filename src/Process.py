@@ -109,7 +109,6 @@ class Process():
 		# parsing the XML document to the the root (setup) of the document
 		tree = ET.parse(self.get_capabilities)
 		root = tree.getroot()
-
 		for element in root.findall('./{http://www.opengis.net/wfs/2.0}FeatureTypeList/{http://www.opengis.net/wfs/2.0}FeatureType/{http://www.opengis.net/wfs/2.0}Name'):
 
 			if element.text in self.layer_name:
@@ -128,7 +127,6 @@ class Process():
 		#converting of bbox0 (4326 > self.crs)
 
 		#bbox0 = [11.9936108555477, 54.0486077396211, 12.3044984617793, 54.2465934706281] 
-
 		inProj = Proj(init='epsg:4326')
 		outProj = Proj(self.crs)
 		x1,y1 = transform(inProj,outProj,bbox0[0],bbox0[1])

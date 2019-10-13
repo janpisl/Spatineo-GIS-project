@@ -5,6 +5,7 @@ from geojson import Polygon
 import pdb
 from shapely.geometry import shape, mapping
 import numpy as np
+from scipy import stats
 
 #pdb.set_trace()
 
@@ -38,6 +39,13 @@ class Algorithm():
 			features.append(feat)
 		return features
 
+	def compute_threshold(self, raster):
+		'''mode = stats.mode(raster, axis=None)[0][0]
+		std = np.std(raster)
+		mask = raster > (2*std +mode)
+		avg = np.average(raster[0][mask])'''
+
+		return np.average(raster)
 
 	def solve(self, output_path, bin_output_path):
 		band1 = self.raster.read()
@@ -63,7 +71,6 @@ class Algorithm():
 			#if i == 1000:
 			#    ref_image_out = ref_image
 			#i = i + 1
-		
 		# Save the image into disk.     
 		img_output = rasterio.open(
 			output_path,
@@ -78,9 +85,11 @@ class Algorithm():
 			transform=self.raster.transform,)   
 		img_output.write(band_out)
 		img_output.close()
+		pdb.set_trace()
 
 		#TODO: replace this with something sensible
-		threshold = 20
+		threshold = self.compute_threshold(band_out)
+		#threshold = 40
 
 		aux_raster = np.copy(band_out)
 		binary_raster = aux_raster > threshold
