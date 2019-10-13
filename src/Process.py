@@ -66,6 +66,7 @@ class Process():
 		'''
 		# TODO: It must be able to do both WMS and WFS as well as work with different types of XML document setups.
 		
+		# WMS solution
 		# init
 		bbox = None
 		layer = False
@@ -81,7 +82,7 @@ class Process():
 			if element.text == self.layer_name:
 				layer = True
 
-			# retrieve the bbox when the contrains are upheld
+			# retrieve the bbox when the contraints are upheld
 			if element.tag == '{http://www.opengis.net/wms}BoundingBox' and element.attrib['CRS'] == self.crs and layer:
 				bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
 
@@ -90,22 +91,54 @@ class Process():
 					bbox[item] = float(bbox[item])
 
 		#bbox = [192328.204900, 6639377.660400, 861781.306600, 7822120.847100]
-		#print(bbox)
 
-		# throww exception if the bbox is not found
+		# throw exception if the bbox is not found
 		if not bbox:
 			raise Exception("Bounding box information not found for the layer.")
 		"""
 		
-		bbox0 =[11.9936108555477, 54.0486077396211, 12.3044984617793, 54.2465934706281]
+
+		# WFS SOLUTION
+		
+		#NOTE: this solution converts bbox given in WGS84 (4326) to particular CRS of layer (reason: bbox of layer in particular CRS not included in XML)
+		
+		# init
+		bbox = None
+		layer = False
+
+		# parsing the XML document to the the root (setup) of the document
+		tree = ET.parse(self.get_capabilities)
+		root = tree.getroot()
+
+		for element in root.findall('./{http://www.opengis.net/wfs/2.0}FeatureTypeList/{http://www.opengis.net/wfs/2.0}FeatureType/{http://www.opengis.net/wfs/2.0}Name'):
+
+			if element.text in self.layer_name:
+				layer = True
+
+				for tag in root.iter('{http://www.opengis.net/ows/1.1}LowerCorner'):
+					latlon1 = tag.text.split()
+					latlon1 = [float(i) for i in latlon1]
+
+				for tag in root.iter('{http://www.opengis.net/ows/1.1}UpperCorner'):
+					latlon2 = tag.text.split() 
+					latlon2 = [float(i) for i in latlon2]
+
+				bbox0 = latlon1 + latlon2
+
+		#converting of bbox0 (4326 > self.crs)
+
+		#bbox0 = [11.9936108555477, 54.0486077396211, 12.3044984617793, 54.2465934706281] 
+
 		inProj = Proj(init='epsg:4326')
 		outProj = Proj(self.crs)
-		#lat1,lon1,lat2,lon2 = bbox0[0],bbox0[1],bbox0[2],bbox0[3]
 		x1,y1 = transform(inProj,outProj,bbox0[0],bbox0[1])
 		x2,y2 = transform(inProj,outProj,bbox0[2],bbox0[3])
 		bbox=[x1,y1,x2,y2]
-		
 		return bbox
+		
+		# throw exception if the bbox is not found
+		if not bbox:
+			raise Exception("Bounding box information not found for the layer.")
 
 
 	def create_empty_raster(self, output_name, crs, bbox, resolution=1000, driver='GTiff'):
@@ -181,4 +214,3 @@ if __name__ == '__main__':
 
 	process.run_algorithm()
 	#print("Process successfully finished. Output raster has been written to a location specified in your ini file.")
-	
