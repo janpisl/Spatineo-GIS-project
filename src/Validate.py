@@ -3,6 +3,9 @@ import rasterio.features
 import geojson
 import numpy as np
 
+import configparser
+import argparse
+
 def validate(url, layer_name, srs, bbox, result_file, output_path):
 
 	# Set the driver (optional)
@@ -38,7 +41,7 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 	feat = layer.GetNextFeature()
 	count = 1
 	while feat is not None:
-		if count % 100:
+		if count % 100 == 0:
 			print("Feature: {}".format(count))
 		geom = feat.GetGeometryRef()
 		json_feat = geojson.loads(geom.ExportToJson())
@@ -50,7 +53,7 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 
 	# Close the connection
 	wfs_ds = None
-
+	print("Iteration done. Creating validation.")
 	# Open the file that we want to validate
 	result = rasterio.open(result_file)
 
@@ -80,16 +83,27 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 
 	output.write(comparison, 1)
 	output.close()
+	print("Done")
 
+	return 0
 
 
 if __name__ == '__main__':
-	# TODO: Remove hard-coded values...
+	parser = argparse.ArgumentParser()
+	parser.add_argument("path_to_config", help="Path to the file containing configuration.")
+	args = parser.parse_args()
+
+	config = configparser.ConfigParser()
+	data = config.read(args.path_to_config)
+
+	if len(data) == 0:
+		raise Exception("Configuration file not found.")
+
 	validate(
-		"https://geo.sv.rostock.de/geodienste/hospize/wfs",
-		"hospize:hro.hospize.hospize",
-		"urn:ogc:def:crs:EPSG::25833",
-		"303000,5993000,325000,6015000",
-		"/Users/juhohanninen/spatineo/result_out44.tif",
-		"/Users/juhohanninen/spatineo/validation.tif"
+		config.get('validation', 'wfs_url'),
+		config.get('validation', 'layer_name'),
+		config.get('validation', 'srs'),
+		config.get('validation', 'bbox'),
+		config.get('validation', 'raster_to_validate'),
+		config.get('validation', 'validation_file')
 	)
