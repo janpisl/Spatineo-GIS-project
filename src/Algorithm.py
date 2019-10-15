@@ -91,7 +91,6 @@ class Algorithm():
 			transform=self.raster.transform,)   
 		img_output.write(band_out)
 		img_output.close()
-		pdb.set_trace()
 
 		#TODO: replace this with something sensible
 		threshold = self.compute_threshold(band_out)
