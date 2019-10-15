@@ -36,6 +36,7 @@ class Algorithm():
 			feat = Polygon([(bbox[0], bbox[1]), (bbox[0], bbox[3]), (bbox[2], bbox[3]), (bbox[2], bbox[1]), (bbox[0], bbox[1])])
 			# Store imageTestResult to the feature.
 			feat['imageTestResult'] = res['imageAnalysisResult']
+			feat['testResult'] = res['testResult']
 			features.append(feat)
 		return features
 
@@ -60,8 +61,13 @@ class Algorithm():
 			mask = ref_image[0] != nd
 			if feat['imageTestResult'] == 1:
 				band_out[0][mask] +=1
+			elif feat['imageTestResult'] == 0:
+				band_out[0][mask] -= 1
 			elif feat['imageTestResult'] == -1:
-				band_out[0][mask] -=1
+				if feat['testResult'] == 0: 
+					band_out[0][mask] -=1
+			#	TODO: else: - include option to just keep pixel value as it is if the 'testResult' values are between 1-5 ? 
+			#		band_out[0][mask] = 
 			else:
 				#TODO: exclude responses with feat['imageTestResult'] == None
 				#this should be done earlier than here (no reason to iterate through them)
