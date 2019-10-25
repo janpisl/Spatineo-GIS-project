@@ -63,16 +63,11 @@ class Algorithm():
 				band_out[0][mask] +=1
 			elif feat['imageAnalysisResult'] == 0:
 				band_out[0][mask] -= 1
-			elif feat['imageAnalysisResult'] == -1:
-				if feat['testResult'] == 0: 
-					band_out[0][mask] -=1
-			#	TODO: else: - include option to just keep pixel value as it is if the 'testResult' values are between 1-5 ? 
-			#		band_out[0][mask] = 
 			else:
 				#TODO: exclude responses with feat['imageTestResult'] == None
 				#this should be done earlier than here (no reason to iterate through them)
 				print("unexpected imageTestResult value: {}".format(feat['imageAnalysisResult']))
-				#print(feat)
+				print(feat)
 
 			#if i == 1000:
 			#    ref_image_out = ref_image
