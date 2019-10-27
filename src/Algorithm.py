@@ -61,14 +61,16 @@ class Algorithm():
 			mask = ref_image[0] != nd
 			if feat['imageAnalysisResult'] == 1:
 				eval_raster[0][mask] +=1
+				norm_raster[0][mask] += 1
 			elif feat['imageAnalysisResult'] == 0:
 				eval_raster[0][mask] -= 1
+				norm_raster[0][mask] += 1
 			else:
 				#TODO: exclude responses with feat['imageTestResult'] == None
 				#this should be done earlier than here (no reason to iterate through them)
 				print("unexpected imageTestResult value: {}".format(feat['imageAnalysisResult']))
 				print(feat)
-			norm_raster[0][mask] += 1
+			
 
 			#if i == 1000:
 			#    ref_image_out = ref_image
@@ -92,9 +94,9 @@ class Algorithm():
 
 		#TODO: replace this with something sensible
 		threshold = self.compute_threshold(eval_raster)
-
+		assert(False)
 		binary_raster = eval_raster > threshold
-
+		#pdb.set_trace()
 		# Save the image into disk.        
 		bin_output = rasterio.open(
 			bin_output_path,
