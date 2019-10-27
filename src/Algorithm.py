@@ -49,8 +49,8 @@ class Algorithm():
 		return np.average(raster)
 
 	def solve(self, output_path, bin_output_path):
-		band1 = self.raster.read()
-		band_out = np.copy(band1)
+		eval_raster = self.raster.read()
+		norm_raster = np.copy(eval_raster)
 		for feat in self.features:
 			# this is a really dirty solution
 			#TODO: replace with a better one
@@ -60,18 +60,22 @@ class Algorithm():
 			nd = self.raster.nodata
 			mask = ref_image[0] != nd
 			if feat['imageAnalysisResult'] == 1:
-				band_out[0][mask] +=1
+				eval_raster[0][mask] +=1
 			elif feat['imageAnalysisResult'] == 0:
-				band_out[0][mask] -= 1
+				eval_raster[0][mask] -= 1
 			else:
 				#TODO: exclude responses with feat['imageTestResult'] == None
 				#this should be done earlier than here (no reason to iterate through them)
 				print("unexpected imageTestResult value: {}".format(feat['imageAnalysisResult']))
 				print(feat)
+			norm_raster[0][mask] += 1
 
 			#if i == 1000:
 			#    ref_image_out = ref_image
 			#i = i + 1
+		pdb.set_trace()
+		eval_raster = np.divide(eval_raster, norm_raster, out=np.zeros_like(eval_raster), where=norm_raster != 0)
+
 		# Save the image into disk.     
 		img_output = rasterio.open(
 			output_path,
@@ -84,15 +88,13 @@ class Algorithm():
 			dtype = self.raster.dtypes[0],
 			crs=self.raster.crs,
 			transform=self.raster.transform,)   
-		img_output.write(band_out)
+		img_output.write(eval_raster)
 		img_output.close()
 
 		#TODO: replace this with something sensible
-		threshold = self.compute_threshold(band_out)
-		#threshold = 40
+		threshold = self.compute_threshold(eval_raster)
 
-		aux_raster = np.copy(band_out)
-		binary_raster = aux_raster > threshold
+		binary_raster = eval_raster > threshold
 
 		# Save the image into disk.        
 		bin_output = rasterio.open(
