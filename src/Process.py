@@ -57,8 +57,6 @@ class Process():
 			service_name = element.text		
 		
 		return service_name
-		
-			
 
 
 	def load_requests(self, path):
@@ -119,54 +117,134 @@ class Process():
 				raise Exception("Bounding box information not found for the layer.")
 
 		elif self.service == 'WFS':
-		
-
-			# WFS SOLUTION
-			
-			#NOTE: this solution converts bbox given in WGS84 (4326) to particular CRS of layer (reason: bbox of layer in particular CRS not included in XML)
-			
 			# init
 			bbox = None
 			bbox0 = None
 			layer = False
 
-			# parsing the XML document to the the root (setup) of the document
+			# parsing the XML document to the root (setup) of the document
 			tree = ET.parse(self.get_capabilities)
 			root = tree.getroot()
-			for element in root.findall('./{http://www.opengis.net/wfs/2.0}FeatureTypeList/{http://www.opengis.net/wfs/2.0}FeatureType/{http://www.opengis.net/wfs/2.0}Name'):
 
-				if element.text in self.layer_name:
-					layer = True
+			#WFS ver. 2.x.x
+			for element in root.findall('./{http://www.opengis.net/wfs/2.0}FeatureTypeList/{http://www.opengis.net/wfs/2.0}FeatureType'):
+				for child in element:
+					if child.tag == '{http://www.opengis.net/wfs/2.0}Name' and (child.text in self.layer_name):
+						layer = True
 
-					for tag in root.iter('{http://www.opengis.net/ows/1.1}LowerCorner'):
-						latlon1 = tag.text.split()
-						latlon1 = [float(i) for i in latlon1]
+					if layer and (child.tag == '{http://www.opengis.net/ows/1.1}WGS84BoundingBox'):
+						for tag in root.iter('{http://www.opengis.net/ows/1.1}LowerCorner'):
+						#this may NOT be dependent on particular layer name and maybe takes simply fisrt coordinates = first text in tag 'LowerCorner'
+							lonlat1 = tag.text.split()
+							lonlat1 = [float(i) for i in lonlat1]
 
-					for tag in root.iter('{http://www.opengis.net/ows/1.1}UpperCorner'):
-						latlon2 = tag.text.split() 
-						latlon2 = [float(i) for i in latlon2]
+						for tag in root.iter('{http://www.opengis.net/ows/1.1}UpperCorner'):
+							lonlat2 = tag.text.split() 
+							lonlat2 = [float(i) for i in lonlat2]
 
-					bbox0 = latlon1 + latlon2
+						bbox0 = lonlat1 + lonlat2
 
-			#converting of bbox0 (4326 > self.crs)
+				# Name (xml) needs to be exctracted from string (e.g. pnr:Paikka) and compared with layerName (json) (e.g. http://xml.nls.fi/Nimisto/Nimistorekisteri/2009/02:Paikka)
+				if layer == False:
+					for child in element:
+						if child.tag == '{http://www.opengis.net/wfs/2.0}Name':
+							index=child.text.rfind(':')
+							string=child.text[index+1:]
+							if string in self.layer_name:
+								layer = True
 
-			# throw exepction if bbox0 is not found 
-			if not bbox0: 
-				raise Exception("Bounding box (from projection in WFS) not found for this layer.")
+						if layer and (child.tag == '{http://www.opengis.net/ows/1.1}WGS84BoundingBox'):
+							for tag in root.iter('{http://www.opengis.net/ows/1.1}LowerCorner'):
+								lonlat1 = tag.text.split()
+								lonlat1 = [float(i) for i in lonlat1]
 
-			#bbox0 = [11.9936108555477, 54.0486077396211, 12.3044984617793, 54.2465934706281] 
-			inProj = Proj(init='epsg:4326')
-			outProj = Proj(self.crs)
-			x1,y1 = transform(inProj,outProj,bbox0[0],bbox0[1])
-			x2,y2 = transform(inProj,outProj,bbox0[2],bbox0[3])
-			bbox=[x1,y1,x2,y2]
+							for tag in root.iter('{http://www.opengis.net/ows/1.1}UpperCorner'):
+								lonlat2 = tag.text.split() 
+								lonlat2 = [float(i) for i in lonlat2]
+							
+							bbox0 = lonlat1 + lonlat2
+					
+						if index == -1:
+							raise Exception("Layer name not found.")
+
+				if layer == True: #i.e. not continue to another layer
+					break
+
+			#WFS ver. 1.x.x (1.0.x, 1.1.x)
+			for element in root.findall('./{http://www.opengis.net/wfs}FeatureTypeList/{http://www.opengis.net/wfs}FeatureType'):
+				for child in element:
+					if child.tag == '{http://www.opengis.net/wfs}Name' and (child.text in self.layer_name):
+						layer = True
+				
+					if layer and (child.tag == '{http://www.opengis.net/ows}WGS84BoundingBox'):
+						for tag in root.iter('{http://www.opengis.net/ows}LowerCorner'):
+							lonlat1 = tag.text.split()
+							lonlat1 = [float(i) for i in lonlat1]
+
+						for tag in root.iter('{http://www.opengis.net/ows}UpperCorner'):
+							lonlat2 = tag.text.split() 
+							lonlat2 = [float(i) for i in lonlat2]
+						
+						bbox0 = lonlat1 + lonlat2
+
+					#ver 1.0.x
+					if layer and (child.tag == '{http://www.opengis.net/wfs}LatLongBoundingBox'):
+						bbox0=child.attrib
+						bbox=[bbox0['minx'], bbox0['miny'], bbox0['maxx'], bbox0['maxy']]
+						for i in range(len(bbox)):
+							bbox[i]=float(bbox[i])
+
+				# in case layer name needs to be exctracted from string (e.g. pnr:Paikka, layer name is Paikka)
+				if layer == False:
+					for child in element:
+						if child.tag == '{http://www.opengis.net/wfs}Name':
+							index=child.text.rfind(':')
+							string=child.text[index+1:]
+							if string in self.layer_name:
+								layer = True
+
+						if layer and (child.tag == '{http://www.opengis.net/ows}WGS84BoundingBox'):
+							for tag in root.iter('{http://www.opengis.net/ows}LowerCorner'):
+								lonlat1 = tag.text.split()
+								lonlat1 = [float(i) for i in lonlat1]
+
+							for tag in root.iter('{http://www.opengis.net/ows}UpperCorner'):
+								lonlat2 = tag.text.split() 
+								lonlat2 = [float(i) for i in lonlat2]
+						
+							bbox0 = lonlat1 + lonlat2
+
+						#ver 1.0.x
+						if layer and (child.tag == '{http://www.opengis.net/wfs}LatLongBoundingBox'):
+							bbox0=child.attrib
+							bbox=[bbox0['minx'], bbox0['miny'], bbox0['maxx'], bbox0['maxy']]
+							for i in range(len(bbox)):
+								bbox[i]=float(bbox[i])
+					
+						if index == -1:
+							raise Exception("Layer name not found.")
+
+				if layer == True:
+					break
+
+			#CONVERSION of bbox0 (4326 > self.crs)
+			if bbox == None:
+				#fixing problem with EPSG: 4269 (switch lat and long)
+				if '4269' in self.crs:
+					bbox0=[bbox0[1],bbox0[0],bbox0[3],bbox0[2]]
+					print('EPSG 4269, coordinates have been swichted for correct transformation')
+
+				inProj = Proj(init='epsg:4326')
+				outProj = Proj(self.crs)
+				x1,y1 = transform(inProj,outProj,bbox0[0],bbox0[1])
+				x2,y2 = transform(inProj,outProj,bbox0[2],bbox0[3])
+				bbox=[x1,y1,x2,y2]
 
 			# throw exception if the bbox is not found
 			if not bbox:
 				raise Exception("Bounding box information not found for the layer.")
 
-		return bbox
-
+			return bbox
 
 	def create_empty_raster(self, output_name, crs, bbox, resolution=1000, driver='GTiff'):
 		''' This function creates an empty raster file with the provided parametres.
