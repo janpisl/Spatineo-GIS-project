@@ -47,10 +47,8 @@ class Algorithm():
 		avg = np.average(raster[0][mask])'''
 		mode = stats.mode(raster, axis=None)[0][0]
 		print("raster average: ",np.average(raster))
-		if mode > np.average(raster):
-			return mode
-		else:
-			return np.average(raster) 
+		
+		return np.average(raster) 
 
 	def solve(self, output_path, bin_output_path):
 		eval_raster = self.raster.read()
@@ -69,6 +67,7 @@ class Algorithm():
 				eval_raster[0][mask] += 1
 				norm_raster[0][mask] += 1
 			elif (feat['imageAnalysisResult'] == 0 or feat['imageAnalysisResult'] == -1):
+				eval_raster[0][mask] -= 1
 				norm_raster[0][mask] += 1
 			else:
 				#TODO: exclude responses with feat['imageTestResult'] == None
@@ -79,7 +78,7 @@ class Algorithm():
 			#if i == 1000:
 			#    ref_image_out = ref_image
 			#i = i + 1
-		#eval_raster = np.divide(eval_raster, norm_raster, out=np.zeros_like(eval_raster), where=norm_raster != 0)
+		eval_raster = np.divide(eval_raster, norm_raster, out=np.zeros_like(eval_raster), where=norm_raster != 0)
 		print("there was {} requests".format(request_counter))
 		# Save the image into disk.     
 		img_output = rasterio.open(
