@@ -32,8 +32,8 @@ class Process():
 		self.get_capabilities = cfg.get('data', 'get_capabilities')
 		self.requests = self.load_requests(self.response_file_path)
 		self.service = self.load_service(self.get_capabilities)
-		self.crs = self.requests[0]['layerKey']['crs'] 
-		self.layer_name = self.requests[0]['layerKey']['layerName']	
+		self.crs = self.requests[3]['layerKey']['crs'] 
+		self.layer_name = self.requests[3]['layerKey']['layerName']
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs, self.service)
 		self.raster = self.create_empty_raster('../../tmp.tif', self.crs, self.layer_bbox)
 		try: 
@@ -94,7 +94,10 @@ class Process():
 
 			# searching the XML document for the tag with the correct request name
 			for element in root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/'):
-				
+				# this is to ensure it doesn't search in other layers in case bbox is not found in the target layer
+				# it is not 100% so if there are any problems remove it
+				if (element.tag == '{http://www.opengis.net/wms}Name') and (element.text != self.layer_name):
+					layer = False
 				# change layer to true if the request is found
 				if element.text == self.layer_name:
 					layer = True
@@ -106,6 +109,8 @@ class Process():
 					# change from strings to float
 					for item in range(len(bbox)):
 						bbox[item] = float(bbox[item])
+					# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
+					break
 
 			#bbox = [192328.204900, 6639377.660400, 861781.306600, 7822120.847100]
 
