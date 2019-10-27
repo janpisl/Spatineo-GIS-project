@@ -29,7 +29,7 @@ class Algorithm():
 		returns: list of geojson elements
 		'''
 		features = []
-		for res in responses[0]['results']:
+		for res in responses[3]['results']:
 			# Convert bbox as a list.
 			bbox = list(map(float, res['bBox'].split(',')))
 			# Create a closed Polygon following the edges of the bbox.
@@ -45,13 +45,19 @@ class Algorithm():
 		std = np.std(raster)
 		mask = raster > (2*std +mode)
 		avg = np.average(raster[0][mask])'''
-
-		return np.average(raster)
+		mode = stats.mode(raster, axis=None)[0][0]
+		print("raster average: ",np.average(raster))
+		if mode > np.average(raster):
+			return mode
+		else:
+			return np.average(raster) 
 
 	def solve(self, output_path, bin_output_path):
-		band1 = self.raster.read()
-		band_out = np.copy(band1)
+		eval_raster = self.raster.read()
+		norm_raster = np.copy(eval_raster)
+		request_counter = 0
 		for feat in self.features:
+			request_counter += 1
 			# this is a really dirty solution
 			#TODO: replace with a better one
 			feat_format = str(feat).replace('[[', '[[[').replace(']]', ']]]')
@@ -60,18 +66,21 @@ class Algorithm():
 			nd = self.raster.nodata
 			mask = ref_image[0] != nd
 			if feat['imageAnalysisResult'] == 1:
-				band_out[0][mask] +=1
-			elif feat['imageAnalysisResult'] == 0:
-				band_out[0][mask] -= 1
+				eval_raster[0][mask] += 1
+				norm_raster[0][mask] += 1
+			elif (feat['imageAnalysisResult'] == 0 or feat['imageAnalysisResult'] == -1):
+				norm_raster[0][mask] += 1
 			else:
 				#TODO: exclude responses with feat['imageTestResult'] == None
 				#this should be done earlier than here (no reason to iterate through them)
 				print("unexpected imageTestResult value: {}".format(feat['imageAnalysisResult']))
 				print(feat)
-
+			
 			#if i == 1000:
 			#    ref_image_out = ref_image
 			#i = i + 1
+		#eval_raster = np.divide(eval_raster, norm_raster, out=np.zeros_like(eval_raster), where=norm_raster != 0)
+		print("there was {} requests".format(request_counter))
 		# Save the image into disk.     
 		img_output = rasterio.open(
 			output_path,
@@ -84,16 +93,32 @@ class Algorithm():
 			dtype = self.raster.dtypes[0],
 			crs=self.raster.crs,
 			transform=self.raster.transform,)   
-		img_output.write(band_out)
+		img_output.write(eval_raster)
+		img_output.close()
+		print("norm average: ",np.average(norm_raster))
+
+		img_output = rasterio.open(
+			"../../output_data/norm_raster5.tif",
+			'w',
+			driver='GTiff',
+			nodata=nd,
+			height=self.raster.height,
+			width = self.raster.width,
+			count=1,
+			dtype = self.raster.dtypes[0],
+			crs=self.raster.crs,
+			transform=self.raster.transform,)   
+		img_output.write(norm_raster)
 		img_output.close()
 
+		test = rasterio.open(output_path)
+		test_raster = test.read()
+		
 		#TODO: replace this with something sensible
-		threshold = self.compute_threshold(band_out)
-		#threshold = 40
+		threshold = self.compute_threshold(eval_raster)
 
-		aux_raster = np.copy(band_out)
-		binary_raster = aux_raster > threshold
-
+		binary_raster = eval_raster > threshold
+		#pdb.set_trace()
 		# Save the image into disk.        
 		bin_output = rasterio.open(
 			bin_output_path,
