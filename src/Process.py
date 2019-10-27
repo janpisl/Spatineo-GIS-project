@@ -41,9 +41,9 @@ class Process():
 		except:
 			self.output_raster_path = '../../out.tif'
 		try:
-			self.binary_raster_output_path = cfg.get('data', 'binary_raster_output_path')
+			self.bin_raster_path = cfg.get('data', 'binary_raster_output_path')
 		except:
-			self.output_raster_path = '../../bin_out.tif'
+			self.bin_raster_path = '../../bin_out.tif'
 
 	def load_service(self, get_capabilities):
 		tree = ET.parse(self.get_capabilities)
@@ -220,7 +220,7 @@ class Process():
 	def run_algorithm(self):
 
 		a = Algorithm(self.raster, self.requests, "WFS")
-		return a.solve(self.output_raster_path, self.output_raster_path)
+		return a.solve(self.output_raster_path, self.bin_raster_path)
 
 
 if __name__ == '__main__':
