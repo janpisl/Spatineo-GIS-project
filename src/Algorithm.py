@@ -73,7 +73,6 @@ class Algorithm():
 			#if i == 1000:
 			#    ref_image_out = ref_image
 			#i = i + 1
-		pdb.set_trace()
 		eval_raster = np.divide(eval_raster, norm_raster, out=np.zeros_like(eval_raster), where=norm_raster != 0)
 
 		# Save the image into disk.     
