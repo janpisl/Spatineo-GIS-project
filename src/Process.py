@@ -34,7 +34,9 @@ class Process():
 		self.service = self.load_service(self.get_capabilities)
 		self.crs = self.requests[3]['layerKey']['crs'] 
 		self.layer_name = self.requests[3]['layerKey']['layerName']
+		print(self.layer_name)
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs, self.service)
+		#print(self.layer_bbox)
 		self.raster = self.create_empty_raster('../../tmp.tif', self.crs, self.layer_bbox)
 		try: 
 			self.output_raster_path = cfg.get('data', 'raster_output_path')
@@ -78,7 +80,6 @@ class Process():
 			returns:
 				bbox: bounding box (array) of the service
 		'''
-
 		# TODO: It must be able to do both WMS and WFS as well as work with different types of XML document setups.
 		if self.service == 'WMS':
 			# WMS solution
@@ -125,50 +126,32 @@ class Process():
 			# parsing the XML document to the root (setup) of the document
 			tree = ET.parse(self.get_capabilities)
 			root = tree.getroot()
-
+			#pdb.set_trace()
 			#WFS ver. 2.x.x
 			for element in root.findall('./{http://www.opengis.net/wfs/2.0}FeatureTypeList/{http://www.opengis.net/wfs/2.0}FeatureType'):
 				for child in element:
-					if child.tag == '{http://www.opengis.net/wfs/2.0}Name' and (child.text in self.layer_name):
+					if child.text:
+						if ":" in child.text:
+							layer_string = child.text.split(":")[1]
+					if child.tag == '{http://www.opengis.net/wfs/2.0}Name' and (child.text in self.layer_name or layer_string in self.layer_name):
 						layer = True
 
 					if layer and (child.tag == '{http://www.opengis.net/ows/1.1}WGS84BoundingBox'):
-						for tag in root.iter('{http://www.opengis.net/ows/1.1}LowerCorner'):
-						#this may NOT be dependent on particular layer name and maybe takes simply fisrt coordinates = first text in tag 'LowerCorner'
-							lonlat1 = tag.text.split()
-							lonlat1 = [float(i) for i in lonlat1]
 
-						for tag in root.iter('{http://www.opengis.net/ows/1.1}UpperCorner'):
-							lonlat2 = tag.text.split() 
-							lonlat2 = [float(i) for i in lonlat2]
-
-						bbox0 = lonlat1 + lonlat2
-
-				# Name (xml) needs to be exctracted from string (e.g. pnr:Paikka) and compared with layerName (json) (e.g. http://xml.nls.fi/Nimisto/Nimistorekisteri/2009/02:Paikka)
-				if layer == False:
-					for child in element:
-						if child.tag == '{http://www.opengis.net/wfs/2.0}Name':
-							index=child.text.rfind(':')
-							string=child.text[index+1:]
-							if string in self.layer_name:
-								layer = True
-
-						if layer and (child.tag == '{http://www.opengis.net/ows/1.1}WGS84BoundingBox'):
-							for tag in root.iter('{http://www.opengis.net/ows/1.1}LowerCorner'):
-								lonlat1 = tag.text.split()
+						for element in child.getchildren():
+							if "LowerCorner" in element.tag:
+								lonlat1 = element.text.split()
 								lonlat1 = [float(i) for i in lonlat1]
+							elif "UpperCorner" in element.tag:
+								lonlat2 = element.text.split() 
+								lonlat2 = [float(i) for i in lonlat2]	
+							else:
+								raise Exception("Unexpected bbox value when parsing xml: {}. Expected LowerCorner or UpperCorner".format(element.tag))	
+						
+						bbox0 = lonlat1 + lonlat2
+						layer = False
+						break
 
-							for tag in root.iter('{http://www.opengis.net/ows/1.1}UpperCorner'):
-								lonlat2 = tag.text.split() 
-								lonlat2 = [float(i) for i in lonlat2]
-							
-							bbox0 = lonlat1 + lonlat2
-					
-						if index == -1:
-							raise Exception("Layer name not found.")
-
-				if layer == True: #i.e. not continue to another layer
-					break
 
 			#WFS ver. 1.x.x (1.0.x, 1.1.x)
 			for element in root.findall('./{http://www.opengis.net/wfs}FeatureTypeList/{http://www.opengis.net/wfs}FeatureType'):
@@ -226,7 +209,6 @@ class Process():
 
 				if layer == True:
 					break
-
 			#CONVERSION of bbox0 (4326 > self.crs)
 			if bbox == None:
 				#fixing problem with EPSG: 4269 (switch lat and long)
