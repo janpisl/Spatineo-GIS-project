@@ -32,8 +32,6 @@ class Process():
 		self.get_capabilities = cfg.get('data', 'get_capabilities')
 		self.requests = self.load_requests(self.response_file_path)
 		self.service = self.load_service(self.get_capabilities)
-		#self.service = self.load_service(self.get_capabilities)
-		#self.service='WFS'
 		self.crs = int(self.requests[0]['layerKey']['crs'].split(':')[-1]) # retrieves epsg code
 		self.layer_name = self.requests[3]['layerKey']['layerName']
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs, self.service)
@@ -58,19 +56,12 @@ class Process():
 	def load_service(self, get_capabilities):
 		tree = ET.parse(self.get_capabilities)
 		root = tree.getroot()
-		
-		service_name = None
-		for elem in root.findall('{http://www.opengis.net/ows/1.1}ServiceIdentification/{http://www.opengis.net/ows/1.1}ServiceType'):
-			service_name = elem.text
 
-		for elem in root.findall('{http://www.opengis.net/ows}ServiceIdentification/{http://www.opengis.net/ows}ServiceType'):
-			service_name = elem.text
+		if root.tag == '{http://www.opengis.net/wfs}WFS_Capabilities' or root.tag == '{http://www.opengis.net/wfs/2.0}WFS_Capabilities':
+			service_name = 'WFS'
+		elif root.tag == '{http://www.opengis.net/wms}WMS_Capabilities':
+			service_name = 'WMS'
 		
-
-		for elem in root.findall('{http://www.opengis.net/wms}Service/{http://www.opengis.net/wms}Name'):
-			service_name = elem.text		
-		
-		print(service_name)
 		return service_name
 
 
