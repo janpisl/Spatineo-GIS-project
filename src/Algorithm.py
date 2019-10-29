@@ -67,7 +67,6 @@ class Algorithm():
 				eval_raster[0][mask] += 1
 				norm_raster[0][mask] += 1
 			elif (feat['imageAnalysisResult'] == 0 or feat['imageAnalysisResult'] == -1):
-				eval_raster[0][mask] -= 1
 				norm_raster[0][mask] += 1
 			else:
 				#TODO: exclude responses with feat['imageTestResult'] == None
@@ -97,7 +96,7 @@ class Algorithm():
 		print("norm average: ",np.average(norm_raster))
 
 		img_output = rasterio.open(
-			"../../output_data/norm_raster5.tif",
+			"../../output_data/norm_raster24274.tif",
 			'w',
 			driver='GTiff',
 			nodata=nd,
