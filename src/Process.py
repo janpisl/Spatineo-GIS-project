@@ -32,7 +32,7 @@ class Process():
 		self.get_capabilities = cfg.get('data', 'get_capabilities')
 		self.requests = self.load_requests(self.response_file_path)
 		self.service = self.load_service(self.get_capabilities)
-		self.crs = self.requests[3]['layerKey']['crs'] 
+		self.crs = int(self.requests[0]['layerKey']['crs'].split(':')[-1]) # retrieves epsg code
 		self.layer_name = self.requests[3]['layerKey']['layerName']
 		print(self.layer_name)
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs, self.service)
@@ -52,12 +52,14 @@ class Process():
 		root = tree.getroot()
 		
 		service_name = None
-		for element in root.findall('{http://www.opengis.net/ows/1.1}ServiceIdentification/{http://www.opengis.net/ows/1.1}ServiceType'):
-			service_name = element.text
-
-		for element in root.findall('{http://www.opengis.net/wms}Service/{http://www.opengis.net/wms}Name'):
-			service_name = element.text		
+		for elem in root.findall('{http://www.opengis.net/ows/1.1}ServiceIdentification/{http://www.opengis.net/ows/1.1}ServiceType'):
+			service_name = elem.text
 		
+
+		for elem in root.findall('{http://www.opengis.net/wms}Service/{http://www.opengis.net/wms}Name'):
+			service_name = elem.text		
+		
+		print(service_name)
 		return service_name
 
 
@@ -128,8 +130,8 @@ class Process():
 			root = tree.getroot()
 			#pdb.set_trace()
 			#WFS ver. 2.x.x
-			for element in root.findall('./{http://www.opengis.net/wfs/2.0}FeatureTypeList/{http://www.opengis.net/wfs/2.0}FeatureType'):
-				for child in element:
+			for elem in root.findall('./{http://www.opengis.net/wfs/2.0}FeatureTypeList/{http://www.opengis.net/wfs/2.0}FeatureType'):
+				for child in elem:
 					if child.text:
 						if ":" in child.text:
 							layer_string = child.text.split(":")[1]
@@ -138,12 +140,12 @@ class Process():
 
 					if layer and (child.tag == '{http://www.opengis.net/ows/1.1}WGS84BoundingBox'):
 
-						for element in child.getchildren():
-							if "LowerCorner" in element.tag:
-								lonlat1 = element.text.split()
+						for elem in child.getchildren():
+							if "LowerCorner" in elem.tag:
+								lonlat1 = elem.text.split()
 								lonlat1 = [float(i) for i in lonlat1]
-							elif "UpperCorner" in element.tag:
-								lonlat2 = element.text.split() 
+							elif "UpperCorner" in elem.tag:
+								lonlat2 = elem.text.split() 
 								lonlat2 = [float(i) for i in lonlat2]	
 							else:
 								raise Exception("Unexpected bbox value when parsing xml: {}. Expected LowerCorner or UpperCorner".format(element.tag))	
