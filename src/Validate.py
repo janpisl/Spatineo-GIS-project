@@ -6,10 +6,26 @@ import numpy as np
 import configparser
 import argparse
 
+
+'''
+[validation]
+wfs_url = https://geo.sv.rostock.de/geodienste/hospize/wfs
+layer_name = hospize:hro.hospize.hospize
+srs = urn:ogc:def:crs:EPSG::25833
+bbox = 303000,5993000,325000,6015000
+raster_to_validate = /Users/juhohanninen/spatineo/result_out44.tif
+validation_file = /Users/juhohanninen/spatineo/validation.tif
+'''
+
 def validate(url, layer_name, srs, bbox, result_file, output_path):
 
 	# Set the driver (optional)
 	wfs_drv = ogr.GetDriverByName('WFS')
+
+	# change bbox from a list into a string, remove spaces and brackets
+	bbox_str = ''.join(char for char in str(bbox) if char not in '[] ')
+	# get just the layer name (as opposed to a URL)
+	layer_name = layer_name.split(":")[-1]
 
 	# Speeds up querying WFS capabilities for services with alot of layers
 	gdal.SetConfigOption('OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN', 'NO')
@@ -19,7 +35,7 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 	gdal.SetConfigOption('OGR_WFS_PAGE_SIZE', '10000')
 
 	# Open the webservice
-	req_url = "{}?service=wfs&version=2.0.0&srsName={}&BBOX={}".format(url, srs, bbox)
+	req_url = "{}?service=wfs&version=2.0.0&srsName={}&BBOX={}".format(url, srs, bbox_str)
 	wfs_ds = wfs_drv.Open('WFS:' + req_url)
 	if not wfs_ds:
 		raise Exception("Couldn't open connection to the server.")
