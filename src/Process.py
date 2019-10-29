@@ -62,6 +62,9 @@ class Process():
 		service_name = None
 		for elem in root.findall('{http://www.opengis.net/ows/1.1}ServiceIdentification/{http://www.opengis.net/ows/1.1}ServiceType'):
 			service_name = elem.text
+
+		for elem in root.findall('{http://www.opengis.net/ows}ServiceIdentification/{http://www.opengis.net/ows}ServiceType'):
+			service_name = elem.text
 		
 
 		for elem in root.findall('{http://www.opengis.net/wms}Service/{http://www.opengis.net/wms}Name'):
@@ -158,8 +161,8 @@ class Process():
 
 
 			#WFS ver. 1.x.x (1.0.x, 1.1.x)
-			for element in root.findall('./{http://www.opengis.net/wfs}FeatureTypeList/{http://www.opengis.net/wfs}FeatureType'):
-				for child in element:
+			for elem in root.findall('./{http://www.opengis.net/wfs}FeatureTypeList/{http://www.opengis.net/wfs}FeatureType'):
+				for child in elem:
 					if child.text:
 						if ':' in child.text:
 							layer_string = child.text.split(':')[1]
@@ -173,12 +176,12 @@ class Process():
 							for i in range(len(bbox)):
 								bbox[i]=float(bbox[i])
 						else:
-							for element in child.getchildren():
-								if "LowerCorner" in element.tag:
-									lonlat1 = element.text.split()
+							for elem in child.getchildren():
+								if "LowerCorner" in elem.tag:
+									lonlat1 = elem.text.split()
 									lonlat1 = [float(i) for i in lonlat1]
-								elif "UpperCorner" in element.tag:
-									lonlat2 = element.text.split() 
+								elif "UpperCorner" in elem.tag:
+									lonlat2 = elem.text.split() 
 									lonlat2 = [float(i) for i in lonlat2]	
 								else:
 									raise Exception("Unexpected bbox value when parsing xml: {}. Expected LowerCorner or UpperCorner".format(element.tag))	
