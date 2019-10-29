@@ -33,7 +33,7 @@ class Process():
 		self.requests = self.load_requests(self.response_file_path)
 		#self.service = self.load_service(self.get_capabilities)
 		self.service='WFS'
-		self.crs = self.requests[3]['layerKey']['crs']
+		self.crs = int(self.requests[0]['layerKey']['crs'].split(':')[-1]) # retrieves epsg code
 		self.layer_name = self.requests[3]['layerKey']['layerName']
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs, self.service)
 		self.raster = self.create_empty_raster('../../tmp.tif', self.crs, self.layer_bbox)
