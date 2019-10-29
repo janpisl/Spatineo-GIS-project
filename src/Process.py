@@ -32,11 +32,11 @@ class Process():
 		self.get_capabilities = cfg.get('data', 'get_capabilities')
 		self.requests = self.load_requests(self.response_file_path)
 		self.service = self.load_service(self.get_capabilities)
+		#self.service = self.load_service(self.get_capabilities)
+		#self.service='WFS'
 		self.crs = int(self.requests[0]['layerKey']['crs'].split(':')[-1]) # retrieves epsg code
 		self.layer_name = self.requests[3]['layerKey']['layerName']
-		print(self.layer_name)
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs, self.service)
-		#print(self.layer_bbox)
 		self.raster = self.create_empty_raster('../../tmp.tif', self.crs, self.layer_bbox)
 		try: 
 			self.output_raster_path = cfg.get('data', 'raster_output_path')
@@ -46,6 +46,14 @@ class Process():
 			self.bin_raster_path = cfg.get('data', 'binary_raster_output_path')
 		except:
 			self.bin_raster_path = '../../bin_out.tif'
+
+
+	def load_requests(self, path):
+		with open(path) as source:
+			requests = json.load(source)
+
+		return requests
+
 
 	def load_service(self, get_capabilities):
 		tree = ET.parse(self.get_capabilities)
@@ -61,13 +69,6 @@ class Process():
 		
 		print(service_name)
 		return service_name
-
-
-	def load_requests(self, path):
-		with open(path) as source:
-			requests = json.load(source)
-
-		return requests
 
 
 	def get_layer_bbox(self, layer_name, crs, service):
@@ -129,6 +130,7 @@ class Process():
 			tree = ET.parse(self.get_capabilities)
 			root = tree.getroot()
 			#pdb.set_trace()
+
 			#WFS ver. 2.x.x
 			for elem in root.findall('./{http://www.opengis.net/wfs/2.0}FeatureTypeList/{http://www.opengis.net/wfs/2.0}FeatureType'):
 				for child in elem:
@@ -158,63 +160,36 @@ class Process():
 			#WFS ver. 1.x.x (1.0.x, 1.1.x)
 			for element in root.findall('./{http://www.opengis.net/wfs}FeatureTypeList/{http://www.opengis.net/wfs}FeatureType'):
 				for child in element:
-					if child.tag == '{http://www.opengis.net/wfs}Name' and (child.text in self.layer_name):
+					if child.text:
+						if ':' in child.text:
+							layer_string = child.text.split(':')[1]
+					if child.tag == '{http://www.opengis.net/wfs}Name'  and (child.text in self.layer_name or layer_string in self.layer_name):
 						layer = True
-				
-					if layer and (child.tag == '{http://www.opengis.net/ows}WGS84BoundingBox'):
-						for tag in root.iter('{http://www.opengis.net/ows}LowerCorner'):
-							lonlat1 = tag.text.split()
-							lonlat1 = [float(i) for i in lonlat1]
 
-						for tag in root.iter('{http://www.opengis.net/ows}UpperCorner'):
-							lonlat2 = tag.text.split() 
-							lonlat2 = [float(i) for i in lonlat2]
-						
-						bbox0 = lonlat1 + lonlat2
+					if layer and (child.tag == '{http://www.opengis.net/ows}WGS84BoundingBox' or child.tag == '{http://www.opengis.net/wfs}LatLongBoundingBox'):
 
-					#ver 1.0.x
-					if layer and (child.tag == '{http://www.opengis.net/wfs}LatLongBoundingBox'):
-						bbox0=child.attrib
-						bbox=[bbox0['minx'], bbox0['miny'], bbox0['maxx'], bbox0['maxy']]
-						for i in range(len(bbox)):
-							bbox[i]=float(bbox[i])
-
-				# in case layer name needs to be exctracted from string (e.g. pnr:Paikka, layer name is Paikka)
-				if layer == False:
-					for child in element:
-						if child.tag == '{http://www.opengis.net/wfs}Name':
-							index=child.text.rfind(':')
-							string=child.text[index+1:]
-							if string in self.layer_name:
-								layer = True
-
-						if layer and (child.tag == '{http://www.opengis.net/ows}WGS84BoundingBox'):
-							for tag in root.iter('{http://www.opengis.net/ows}LowerCorner'):
-								lonlat1 = tag.text.split()
-								lonlat1 = [float(i) for i in lonlat1]
-
-							for tag in root.iter('{http://www.opengis.net/ows}UpperCorner'):
-								lonlat2 = tag.text.split() 
-								lonlat2 = [float(i) for i in lonlat2]
-						
-							bbox0 = lonlat1 + lonlat2
-
-						#ver 1.0.x
-						if layer and (child.tag == '{http://www.opengis.net/wfs}LatLongBoundingBox'):
-							bbox0=child.attrib
-							bbox=[bbox0['minx'], bbox0['miny'], bbox0['maxx'], bbox0['maxy']]
+						if child.tag == '{http://www.opengis.net/wfs}LatLongBoundingBox':
+							bbox=[child.attrib['minx'], child.attrib['miny'], child.attrib['maxx'], child.attrib['maxy']]
 							for i in range(len(bbox)):
 								bbox[i]=float(bbox[i])
-					
-						if index == -1:
-							raise Exception("Layer name not found.")
+						else:
+							for element in child.getchildren():
+								if "LowerCorner" in element.tag:
+									lonlat1 = element.text.split()
+									lonlat1 = [float(i) for i in lonlat1]
+								elif "UpperCorner" in element.tag:
+									lonlat2 = element.text.split() 
+									lonlat2 = [float(i) for i in lonlat2]	
+								else:
+									raise Exception("Unexpected bbox value when parsing xml: {}. Expected LowerCorner or UpperCorner".format(element.tag))	
+							bbox0 = lonlat1 + lonlat2
+						layer = False
 
-				if layer == True:
-					break
-			#CONVERSION of bbox0 (4326 > self.crs)
+
+			# conversion of bbox0 ('4326' to 'self.crs')
 			if bbox == None:
 				#fixing problem with EPSG: 4269 (switch lat and long)
-				if '4269' in self.crs:
+				if self.crs == 4269:
 					bbox0=[bbox0[1],bbox0[0],bbox0[3],bbox0[2]]
 					print('EPSG 4269, coordinates have been swichted for correct transformation')
 
