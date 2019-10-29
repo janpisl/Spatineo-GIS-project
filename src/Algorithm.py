@@ -30,6 +30,9 @@ class Algorithm():
 		'''
 		features = []
 		for res in responses[3]['results']:
+			if ('imageAnalysisResult' not in res.keys() or 'testResult' not in res.keys()
+				or res['testResult'] in ['2', '3', '4', '5']):
+				continue
 			# Convert bbox as a list.
 			bbox = list(map(float, res['bBox'].split(',')))
 			# Create a closed Polygon following the edges of the bbox.
