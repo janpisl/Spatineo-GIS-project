@@ -29,7 +29,7 @@ class Algorithm():
 		returns: list of geojson elements
 		'''
 		features = []
-		for res in responses[3]['results']:
+		for res in responses[0]['results']:
 			if ('imageAnalysisResult' not in res.keys() or 'testResult' not in res.keys()
 				or res['testResult'] in ['2', '3', '4', '5']):
 				continue
