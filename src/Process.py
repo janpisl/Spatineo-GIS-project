@@ -20,22 +20,22 @@ import configparser
 import argparse
 
 from Algorithm import Algorithm
-#pdb.set_trace()
-
+from Validate import validate
 from pyproj import Proj, transform
 
 class Process():
 
 	def __init__(self, cfg):
-		#self.response_file_path = 'converted_example_service.txt'
 		self.response_file_path = cfg.get('data', 'response_file')
 		self.get_capabilities = cfg.get('data', 'get_capabilities')
 		self.requests = self.load_requests(self.response_file_path)
 		self.service = self.load_service(self.get_capabilities)
-		self.crs = int(self.requests[0]['layerKey']['crs'].split(':')[-1]) # retrieves epsg code
-		self.layer_name = self.requests[3]['layerKey']['layerName']
+		self.crs = self.requests[0]['layerKey']['crs']
+		self.layer_name = self.requests[0]['layerKey']['layerName']
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs, self.service)
 		self.raster = self.create_empty_raster('../../tmp.tif', self.crs, self.layer_bbox)
+		# not tested, there might be some problems
+		self.url = self.requests[0]['results'][0]['url'].split("?")[0]
 		try: 
 			self.output_raster_path = cfg.get('data', 'raster_output_path')
 		except:
@@ -44,6 +44,7 @@ class Process():
 			self.bin_raster_path = cfg.get('data', 'binary_raster_output_path')
 		except:
 			self.bin_raster_path = '../../bin_out.tif'
+
 
 
 	def load_requests(self, path):
@@ -78,6 +79,8 @@ class Process():
 				bbox: bounding box (array) of the service
 		'''
 		# TODO: It must be able to do both WMS and WFS as well as work with different types of XML document setups.
+		epsg_code = int(self.requests[0]['layerKey']['crs'].split(':')[-1])  #retrieves epsg code
+
 		if self.service == 'WMS':
 			# WMS solution
 			# init
@@ -99,7 +102,7 @@ class Process():
 					layer = True
 
 				# retrieve the bbox when the contraints are upheld
-				if element.tag == '{http://www.opengis.net/wms}BoundingBox' and element.attrib['CRS'] == self.crs and layer:
+				if element.tag == '{http://www.opengis.net/wms}BoundingBox' and element.attrib['CRS'] == epsg_code and layer:
 					bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
 
 					# change from strings to float
@@ -180,15 +183,15 @@ class Process():
 						layer = False
 
 
-			# conversion of bbox0 ('4326' to 'self.crs')
+			# conversion of bbox0 (WGS84 to self.crs)
 			if bbox == None:
 				#fixing problem with EPSG: 4269 (switch lat and long)
-				if self.crs == 4269:
+				if epsg_code == 4269:
 					bbox0=[bbox0[1],bbox0[0],bbox0[3],bbox0[2]]
 					print('EPSG 4269, coordinates have been swichted for correct transformation')
 
 				inProj = Proj(init='epsg:4326')
-				outProj = Proj(self.crs)
+				outProj = Proj(epsg_code)
 				x1,y1 = transform(inProj,outProj,bbox0[0],bbox0[1])
 				x2,y2 = transform(inProj,outProj,bbox0[2],bbox0[3])
 				bbox=[x1,y1,x2,y2]
@@ -271,4 +274,6 @@ if __name__ == '__main__':
 	process = Process(config)
 
 	process.run_algorithm()
-	#print("Process successfully finished. Output raster has been written to a location specified in your ini file.")
+	
+	# validation of the result. 
+	validate(process.url, process.layer_name, process.crs, process.layer_bbox, process.bin_raster_path, "../../validation49199.tif")
