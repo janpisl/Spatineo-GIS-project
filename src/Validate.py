@@ -2,7 +2,7 @@ from osgeo import ogr, osr, gdal
 import rasterio.features
 import geojson
 import numpy as np
-
+import pdb
 import configparser
 import argparse
 
@@ -55,8 +55,9 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 	print("Start iteration through features.")
 
 	feat = layer.GetNextFeature()
-	count = 1
+	count = 0
 	while feat is not None:
+		count += 1
 		if count % 100 == 0:
 			print("Feature: {}".format(count))
 		geom = feat.GetGeometryRef()
@@ -72,13 +73,17 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 	print("Iteration done. Creating validation.")
 	# Open the file that we want to validate
 	result = rasterio.open(result_file)
-
-	real_data = rasterio.features.rasterize(
-		shapes,
-		out_shape=result.shape,
-		transform=result.transform,
-		dtype='int16'
-	)
+	pdb.set_trace()
+	if count == 0:
+		print("No features in the layer.")
+		real_data = np.zeros_like(result)
+	else:
+		real_data = rasterio.features.rasterize(
+			shapes,
+			out_shape=result.shape,
+			transform=result.transform,
+			dtype='int8'
+		)
 
 	# Since result is binary, the comparison is 0 if some value was the same.
 	# 1 if we got false negative and -1 if we got false positive.
@@ -92,7 +97,7 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 		height=result.height,
 		width=result.width,
 		count=1,
-		dtype='int16',
+		dtype='int8',
 		crs=result.crs,
 		transform=result.transform
 	)
