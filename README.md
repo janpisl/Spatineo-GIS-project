@@ -1,5 +1,9 @@
 # Spatineo-GIS-project
-GIS software development project for Spatineo Oy done as a part of the Project Course at Aalto University
+GIS software development project for Spatineo Oy done as a part of the Project Course at Aalto University by: 
+* Jan Pisl
+* Juho Hanninen
+* Renée Mie Fredensborg Hansen 
+* Lucie Stara
 
 
 ## Requirements and installation
