@@ -18,6 +18,7 @@ import pdb
 import json
 import configparser
 import argparse
+import utm
 
 from Algorithm import Algorithm
 from Validate import validate
@@ -33,7 +34,8 @@ class Process():
 		self.crs = self.requests[0]['layerKey']['crs']
 		self.layer_name = self.requests[0]['layerKey']['layerName']
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs, self.service)
-		self.raster = self.create_empty_raster('../../tmp.tif', self.crs, self.layer_bbox)
+
+		self.raster = self.create_empty_raster('../../tmp.tif')
 		# not tested, there might be some problems
 		self.url = self.requests[0]['results'][0]['url'].split("?")[0]
 		try: 
@@ -120,6 +122,7 @@ class Process():
 				raise Exception("Bounding box information not found for the layer.")
 
 		elif self.service == 'WFS':
+
 			# init
 			bbox = None
 			bbox0 = None
@@ -187,10 +190,12 @@ class Process():
 
 			# conversion of bbox0 (WGS84 to self.crs)
 			if bbox == None:
+
+
 				#fixing problem with EPSG: 4269 (switch lat and long)
-				if epsg_code == 4269:
-					bbox0=[bbox0[1],bbox0[0],bbox0[3],bbox0[2]]
-					print('EPSG 4269, coordinates have been swichted for correct transformation')
+				#if epsg_code == 4269:
+				#	bbox0=[bbox0[1],bbox0[0],bbox0[3],bbox0[2]]
+				#	print('EPSG 4269, coordinates have been swichted for correct transformation')
 
 				inProj = Proj(init='epsg:4326')
 				outProj = Proj(epsg_code)
@@ -204,7 +209,7 @@ class Process():
 
 			return bbox
 
-	def create_empty_raster(self, output_name, crs, bbox, resolution=1000, driver='GTiff'):
+	def create_empty_raster(self, output_name, resolution=1000, driver='GTiff'):
 		''' This function creates an empty raster file with the provided parametres.
 		args:
 			output_name: the path where the dataset will be created
@@ -218,8 +223,28 @@ class Process():
 		# TODO: Since we have to update the dataset reguraly, it would be good
 		# to create a separated helper class for raster data handling!
 
+		pdb.set_trace()
+		crs_in_degrees = ['4269','4326']
+
+		if any(x in self.crs for x in crs_in_degrees):
+			#if crs_in_degrees[0] in self.crs:
+
+			#	_min = utm.from_latlon(self.layer_bbox[1], self.layer_bbox[0])
+			#	_max = utm.from_latlon(self.layer_bbox[3], self.layer_bbox[2])
+			#	bbox = [_min[0], _min[1], _max[0], _max[1]]
+			#elif crs_in_degrees[1] in self.crs:
+			_min = utm.from_latlon(self.layer_bbox[0], self.layer_bbox[1])
+			#TODO: this needs to be converted into the same crs as _min
+			_max = utm.from_latlon(self.layer_bbox[2], self.layer_bbox[3])
+			bbox = [_min[0], _min[1], _max[0], _max[1]]
+
+		else:
+			bbox = self.layer_bbox
+
 		# Round up or down to the nearest kilometer.
 		# Assume now that the unit is a meter!
+
+		
 		minx = floor(bbox[0]/resolution) * resolution
 		miny = floor(bbox[1]/resolution) * resolution
 		maxx = ceil(bbox[2]/resolution) * resolution
@@ -229,6 +254,10 @@ class Process():
 		# Note, the meaning of x and y changes between crs! Now, width = x, height = y. Make this more robust at some point.
 		width = int((maxx - minx) / resolution)
 		height = int((maxy - miny) / resolution)
+
+		#if [width, height] == [1,1]:
+
+
 
 		# This ties spatial coordinates and image coordinates together.
 		transform = rasterio.transform.from_origin(minx, maxy, resolution, resolution)
@@ -279,4 +308,4 @@ if __name__ == '__main__':
 	process.run_algorithm()
 	
 	# validation of the result. 
-	validate(process.url, process.layer_name, process.crs, process.layer_bbox, process.bin_raster_path, "../../validation49199.tif")
+	validate(process.url, process.layer_name, process.crs, process.layer_bbox, process.bin_raster_path, "../../validation21764.tif")
