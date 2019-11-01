@@ -29,7 +29,7 @@ class Process():
 		self.response_file_path = cfg.get('data', 'response_file')
 		self.get_capabilities = cfg.get('data', 'get_capabilities')
 		self.requests = self.load_requests(self.response_file_path)
-		self.service = self.load_service(self.get_capabilities)
+		self.service = self.get_service(self.get_capabilities)
 		self.crs = self.requests[0]['layerKey']['crs']
 		self.layer_name = self.requests[0]['layerKey']['layerName']
 		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs, self.service)
@@ -54,15 +54,17 @@ class Process():
 		return requests
 
 
-	def load_service(self, get_capabilities):
+	def get_service(self, get_capabilities):
 		tree = ET.parse(self.get_capabilities)
 		root = tree.getroot()
 
-		if root.tag == '{http://www.opengis.net/wfs}WFS_Capabilities' or root.tag == '{http://www.opengis.net/wfs/2.0}WFS_Capabilities':
-			service_name = 'WFS'
-		elif root.tag == '{http://www.opengis.net/wms}WMS_Capabilities':
+		if "wms" in root.tag.lower():
 			service_name = 'WMS'
-		
+		if "wfs" in root.tag.lower():
+			service_name = 'WFS'
+		else:
+			raise Exception("Couldn't retrieve service type from {}".format(root.tag))
+
 		return service_name
 
 
@@ -259,6 +261,7 @@ class Process():
 	def run_algorithm(self):
 
 		a = Algorithm(self.raster, self.requests, "WFS")
+
 		return a.solve(self.output_raster_path, self.bin_raster_path)
 
 
