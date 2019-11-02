@@ -9,14 +9,29 @@ GIS software development project for Spatineo Oy done as a part of the Project C
 ## Requirements and installation
 This program runs on Python 3. Python can installed e.g. via the official website https://www.python.org
 
-All required packages are listed on [requirements.txt](requirements.txt) -file. They can be installed using [pip](https://pip.pypa.io/en/stable/quickstart/). Pip should be installed alongside Python, so it's not needed to install that separately.
+We use pipenv to handle all packages. Instructions for the installation and usage can be found here: https://pipenv-fork.readthedocs.io/en/latest/index.html
 
-Install required packages:
+Set up the project
 ```sh
-pip install -r requirements.txt
+pipenv install
 ```
 
-*Note: Depending on the Python versions installed on your machine, you may need to add number 3 after the command to indicate you're using Python3 -environment. (`python` -> `python3` and `pip` -> `pip3`). Especially on macOS and Linux*
+Launch new virtual environment:
+```sh
+pipenv shell
+```
+
+Exit environtment shell:
+```sh
+exit
+```
+
+If you want to add a new package to the project:
+```sh
+pipenv install <package>
+```
+
+**To avoid different environment problems, it's always recommended to run code inside virtual environment!**
 
 
 ## Running the program
