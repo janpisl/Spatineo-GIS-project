@@ -23,6 +23,7 @@ import utm
 from Algorithm import Algorithm
 from Validate import validate
 from pyproj import Proj, transform
+from Projection import Projection
 
 class Process():
 
@@ -31,9 +32,10 @@ class Process():
 		self.get_capabilities = cfg.get('data', 'get_capabilities')
 		self.requests = self.load_requests(self.response_file_path)
 		self.service = self.get_service(self.get_capabilities)
-		self.crs = self.requests[0]['layerKey']['crs']
+		crs_name = self.requests[0]['layerKey']['crs']
+		self.crs = Projection(crs_name)
 		self.layer_name = self.requests[0]['layerKey']['layerName']
-		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.crs, self.service)
+		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.service)
 
 		self.raster = self.create_empty_raster('../../tmp.tif')
 		# not tested, there might be some problems
@@ -70,7 +72,7 @@ class Process():
 		return service_name
 
 
-	def get_layer_bbox(self, layer_name, crs, service):
+	def get_layer_bbox(self, layer_name, service):
 		''' The fuction parses the GetCapabilities XML document retrieved in _init_ function in order to search for a 'global' bbox to use. 
 			It retrieves the bbox from the GetCapabilties document by finding the tag of the current request where it finds the bbox with correct CRS. 
 			 
@@ -213,22 +215,17 @@ class Process():
 		''' This function creates an empty raster file with the provided parametres.
 		args:
 			output_name: the path where the dataset will be created
-			height: the height of the new file in pixels
-			width: the width of the new file in pixels
-			crs: coordinate reference system which will be used, (e.g. EPSG:3067)
-			bbox: bounding box [minx, miny, maxx, maxy]
 			driver: GDAL raster driver to create datasets
 		returns: the path where the dataset was created (the same as output_name)
 		'''
 		# TODO: Since we have to update the dataset reguraly, it would be good
 		# to create a separated helper class for raster data handling!
 
-		pdb.set_trace()
-		crs_in_degrees = ['4269','4326']
+		# pdb.set_trace()
 
-		if any(x in self.crs for x in crs_in_degrees):
-			#if crs_in_degrees[0] in self.crs:
-
+		# Check if crs is in degrees
+		if not self.crs.is_projected:
+		
 			#	_min = utm.from_latlon(self.layer_bbox[1], self.layer_bbox[0])
 			#	_max = utm.from_latlon(self.layer_bbox[3], self.layer_bbox[2])
 			#	bbox = [_min[0], _min[1], _max[0], _max[1]]
@@ -276,7 +273,7 @@ class Process():
 			width=width,
 			count=1,
 			dtype=str(data.dtype),
-			crs=crs,
+			crs=self.crs.name,
 			transform=transform,
 		)
 
@@ -308,4 +305,4 @@ if __name__ == '__main__':
 	process.run_algorithm()
 	
 	# validation of the result. 
-	validate(process.url, process.layer_name, process.crs, process.layer_bbox, process.bin_raster_path, "../../validation21764.tif")
+	validate(process.url, process.layer_name, process.crs.name, process.layer_bbox, process.bin_raster_path, "../../validation21764.tif")
