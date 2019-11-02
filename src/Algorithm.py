@@ -18,9 +18,8 @@ class Algorithm():
 			service = WMS/WFS
 		'''	
 		self.raster = rasterio.open(raster)
-		self.responses = responses
 		self.service = service
-		self.features = self.parse_responses_to_geojson(self.responses)
+		self.features = self.parse_responses_to_geojson(responses)
 		
 	def parse_responses_to_geojson(self, responses):
 		''' This method converts response file to geojson geometries. imageAnalysisResult is included to the geojson features.

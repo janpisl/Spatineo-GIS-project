@@ -28,14 +28,14 @@ from Projection import Projection
 class Process():
 
 	def __init__(self, cfg):
-		self.response_file_path = cfg.get('data', 'response_file')
+		response_file_path = cfg.get('data', 'response_file')
 		self.get_capabilities = cfg.get('data', 'get_capabilities')
-		self.requests = self.load_requests(self.response_file_path)
-		self.service = self.get_service(self.get_capabilities)
+		self.requests = self.load_requests(response_file_path)
+		self.service = self.get_service()
 		crs_name = self.requests[0]['layerKey']['crs']
 		self.crs = Projection(crs_name)
 		self.layer_name = self.requests[0]['layerKey']['layerName']
-		self.layer_bbox = self.get_layer_bbox(self.layer_name, self.service)
+		self.layer_bbox = self.get_layer_bbox()
 
 		self.raster = self.create_empty_raster('../../tmp.tif')
 		# not tested, there might be some problems
@@ -58,7 +58,7 @@ class Process():
 		return requests
 
 
-	def get_service(self, get_capabilities):
+	def get_service(self):
 		tree = ET.parse(self.get_capabilities)
 		root = tree.getroot()
 
@@ -72,7 +72,7 @@ class Process():
 		return service_name
 
 
-	def get_layer_bbox(self, layer_name, service):
+	def get_layer_bbox(self):
 		''' The fuction parses the GetCapabilities XML document retrieved in _init_ function in order to search for a 'global' bbox to use. 
 			It retrieves the bbox from the GetCapabilties document by finding the tag of the current request where it finds the bbox with correct CRS. 
 			 
