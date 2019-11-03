@@ -22,20 +22,23 @@ import utm
 
 from Algorithm import Algorithm
 from Validate import validate
-from pyproj import Proj, transform
 from Projection import Projection
+from Capabilities import Capabilities
 
 class Process():
 
 	def __init__(self, cfg):
 		response_file_path = cfg.get('data', 'response_file')
-		self.get_capabilities = cfg.get('data', 'get_capabilities')
+		capabilities_path = cfg.get('data', 'get_capabilities')
+		
+		self.get_capabilities = Capabilities(capabilities_path)
+
 		self.requests = self.load_requests(response_file_path)
-		self.service = self.get_service()
 		crs_name = self.requests[0]['layerKey']['crs']
 		self.crs = Projection(crs_name)
 		self.layer_name = self.requests[0]['layerKey']['layerName']
-		self.layer_bbox = self.get_layer_bbox()
+
+		self.layer_bbox = self.get_capabilities.get_layer_bbox(self.layer_name, self.crs)
 
 		self.raster = self.create_empty_raster('../../tmp.tif')
 		# not tested, there might be some problems
@@ -57,138 +60,6 @@ class Process():
 
 		return requests
 
-
-	def get_service(self):
-		tree = ET.parse(self.get_capabilities)
-		root = tree.getroot()
-
-		if "wms" in root.tag.lower():
-			service_name = 'WMS'
-		if "wfs" in root.tag.lower():
-			service_name = 'WFS'
-		else:
-			raise Exception("Couldn't retrieve service type from {}".format(root.tag))
-
-		return service_name
-
-
-	def get_layer_bbox(self):
-		''' The fuction parses the GetCapabilities XML document retrieved in _init_ function in order to search for a 'global' bbox to use. 
-			It retrieves the bbox from the GetCapabilties document by finding the tag of the current request where it finds the bbox with correct CRS. 
-
-			returns:
-				bbox: bounding box (array) of the service
-		'''
-		# TODO: It must be able to do both WMS and WFS as well as work with different types of XML document setups.
-		epsg_code = self.crs.get_epsg()
-
-		if self.service == 'WMS':
-			# WMS solution
-			# init
-			bbox = None
-			layer = False
-
-			# parsing the XML document to the the root (setup) of the document
-			tree = ET.parse(self.get_capabilities)
-			root = tree.getroot()
-
-			# searching the XML document for the tag with the correct request name
-			for element in root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/'):
-				# this is to ensure it doesn't search in other layers in case bbox is not found in the target layer
-				# it is not 100% so if there are any problems remove it
-				if (element.tag == '{http://www.opengis.net/wms}Name') and (element.text != self.layer_name):
-					layer = False
-				# change layer to true if the request is found
-				if element.text == self.layer_name:
-					layer = True
-
-				# retrieve the bbox when the contraints are upheld
-				if element.tag == '{http://www.opengis.net/wms}BoundingBox' and element.attrib['CRS'] == epsg_code and layer:
-					bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
-
-					# change from strings to float
-					for item in range(len(bbox)):
-						bbox[item] = float(bbox[item])
-					# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
-					break
-
-		elif self.service == 'WFS':
-
-			# init
-			bbox = None
-			bbox0 = None
-			layer = False
-
-			# parsing the XML document to the root (setup) of the document
-			tree = ET.parse(self.get_capabilities)
-			root = tree.getroot()
-
-			#WFS ver. 2.x.x
-			for elem in root.findall('./{http://www.opengis.net/wfs/2.0}FeatureTypeList/{http://www.opengis.net/wfs/2.0}FeatureType'):
-				for child in elem:
-					if child.text:
-						if ":" in child.text:
-							layer_string = child.text.split(":")[1]
-					if child.tag == '{http://www.opengis.net/wfs/2.0}Name' and (child.text in self.layer_name or layer_string in self.layer_name):
-						layer = True
-
-					if layer and (child.tag == '{http://www.opengis.net/ows/1.1}WGS84BoundingBox'):
-
-						for elem in child:
-							if "LowerCorner" in elem.tag:
-								lonlat1 = elem.text.split()
-								lonlat1 = [float(i) for i in lonlat1]
-							elif "UpperCorner" in elem.tag:
-								lonlat2 = elem.text.split() 
-								lonlat2 = [float(i) for i in lonlat2]	
-							else:
-								raise Exception("Unexpected bbox value when parsing xml: {}. Expected LowerCorner or UpperCorner".format(element.tag))	
-						
-						bbox0 = lonlat1 + lonlat2
-						layer = False
-						break
-
-
-			#WFS ver. 1.x.x (1.0.x, 1.1.x)
-			for elem in root.findall('./{http://www.opengis.net/wfs}FeatureTypeList/{http://www.opengis.net/wfs}FeatureType'):
-				for child in elem:
-					if child.text:
-						if ':' in child.text:
-							layer_string = child.text.split(':')[1]
-					if child.tag == '{http://www.opengis.net/wfs}Name'  and (child.text in self.layer_name or layer_string in self.layer_name):
-						layer = True
-
-					if layer and (child.tag == '{http://www.opengis.net/ows}WGS84BoundingBox' or child.tag == '{http://www.opengis.net/wfs}LatLongBoundingBox'):
-
-						if child.tag == '{http://www.opengis.net/wfs}LatLongBoundingBox':
-							bbox=[child.attrib['minx'], child.attrib['miny'], child.attrib['maxx'], child.attrib['maxy']]
-							for i in range(len(bbox)):
-								bbox[i]=float(bbox[i])
-						else:
-							for elem in child.getchildren():
-								if "LowerCorner" in elem.tag:
-									lonlat1 = elem.text.split()
-									lonlat1 = [float(i) for i in lonlat1]
-								elif "UpperCorner" in elem.tag:
-									lonlat2 = elem.text.split() 
-									lonlat2 = [float(i) for i in lonlat2]	
-								else:
-									raise Exception("Unexpected bbox value when parsing xml: {}. Expected LowerCorner or UpperCorner".format(element.tag))	
-							bbox0 = lonlat1 + lonlat2
-						layer = False
-
-
-			# conversion of bbox0 (WGS84 to self.crs)
-			if not bbox and bbox0:
-				x1, y1 = self.crs.convert_from_wgs84(bbox0[0], bbox0[1])
-				x2, y2 = self.crs.convert_from_wgs84(bbox0[2], bbox0[3])
-				bbox = [x1,y1,x2,y2]
-
-		# throw exception if the bbox is not found
-		if not bbox:
-			raise Exception("Bounding box information not found for the layer.")
-
-		return bbox
 
 	def create_empty_raster(self, output_name, resolution=1000, driver='GTiff'):
 		''' This function creates an empty raster file with the provided parametres.
