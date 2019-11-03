@@ -75,12 +75,7 @@ class Process():
 	def get_layer_bbox(self):
 		''' The fuction parses the GetCapabilities XML document retrieved in _init_ function in order to search for a 'global' bbox to use. 
 			It retrieves the bbox from the GetCapabilties document by finding the tag of the current request where it finds the bbox with correct CRS. 
-			 
 
-			args:
-				layer_name: Layer name of the service
-				crs: the coordinate reference system (EPSG code)
-				service: service name (WMS/WFS)
 			returns:
 				bbox: bounding box (array) of the service
 		'''
@@ -133,7 +128,6 @@ class Process():
 			# parsing the XML document to the root (setup) of the document
 			tree = ET.parse(self.get_capabilities)
 			root = tree.getroot()
-			#pdb.set_trace()
 
 			#WFS ver. 2.x.x
 			for elem in root.findall('./{http://www.opengis.net/wfs/2.0}FeatureTypeList/{http://www.opengis.net/wfs/2.0}FeatureType'):
@@ -146,7 +140,7 @@ class Process():
 
 					if layer and (child.tag == '{http://www.opengis.net/ows/1.1}WGS84BoundingBox'):
 
-						for elem in child.getchildren():
+						for elem in child:
 							if "LowerCorner" in elem.tag:
 								lonlat1 = elem.text.split()
 								lonlat1 = [float(i) for i in lonlat1]
@@ -221,8 +215,6 @@ class Process():
 		# TODO: Since we have to update the dataset reguraly, it would be good
 		# to create a separated helper class for raster data handling!
 
-		# pdb.set_trace()
-
 		# Check if crs is in degrees
 		if not self.crs.is_projected:
 		
@@ -240,7 +232,8 @@ class Process():
 
 		# Round up or down to the nearest kilometer.
 		# Assume now that the unit is a meter!
-
+		if not self.crs.coordinate_unit().lower() == 'metre':
+			raise Exception("Coordinate unit not metre. Implementation is missing for other units.")
 		
 		minx = floor(bbox[0]/resolution) * resolution
 		miny = floor(bbox[1]/resolution) * resolution
@@ -248,16 +241,16 @@ class Process():
 		maxy = ceil(bbox[3]/resolution) * resolution
 
 		# Calculate the scale
-		# Note, the meaning of x and y changes between crs! Now, width = x, height = y. Make this more robust at some point.
-		width = int((maxx - minx) / resolution)
-		height = int((maxy - miny) / resolution)
-
-		#if [width, height] == [1,1]:
-
-
-
-		# This ties spatial coordinates and image coordinates together.
-		transform = rasterio.transform.from_origin(minx, maxy, resolution, resolution)
+		# "Normal" case
+		if not self.crs.ne_axis_order:
+			width = int((maxx - minx) / resolution)
+			height = int((maxy - miny) / resolution)
+			transform = rasterio.transform.from_origin(minx, maxy, resolution, resolution)
+		# If north axis is given first.
+		else:
+			height = int((maxx - minx) / resolution)
+			width = int((maxy - miny) / resolution)
+			transform = rasterio.transform.from_origin(maxy, minx, resolution, resolution)
 
 		# Init raster with zeros.
 		data = np.zeros(shape=(height, width))
