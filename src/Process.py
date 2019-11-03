@@ -80,7 +80,7 @@ class Process():
 				bbox: bounding box (array) of the service
 		'''
 		# TODO: It must be able to do both WMS and WFS as well as work with different types of XML document setups.
-		epsg_code = int(self.requests[0]['layerKey']['crs'].split(':')[-1])  #retrieves epsg code
+		epsg_code = self.crs.get_epsg()
 
 		if self.service == 'WMS':
 			# WMS solution
@@ -111,12 +111,6 @@ class Process():
 						bbox[item] = float(bbox[item])
 					# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
 					break
-
-			#bbox = [192328.204900, 6639377.660400, 861781.306600, 7822120.847100]
-
-			# throw exception if the bbox is not found
-			if not bbox:
-				raise Exception("Bounding box information not found for the layer.")
 
 		elif self.service == 'WFS':
 
@@ -185,25 +179,16 @@ class Process():
 
 
 			# conversion of bbox0 (WGS84 to self.crs)
-			if bbox == None:
+			if not bbox and bbox0:
+				x1, y1 = self.crs.convert_from_wgs84(bbox0[0], bbox0[1])
+				x2, y2 = self.crs.convert_from_wgs84(bbox0[2], bbox0[3])
+				bbox = [x1,y1,x2,y2]
 
+		# throw exception if the bbox is not found
+		if not bbox:
+			raise Exception("Bounding box information not found for the layer.")
 
-				#fixing problem with EPSG: 4269 (switch lat and long)
-				#if epsg_code == 4269:
-				#	bbox0=[bbox0[1],bbox0[0],bbox0[3],bbox0[2]]
-				#	print('EPSG 4269, coordinates have been swichted for correct transformation')
-
-				inProj = Proj(init='epsg:4326')
-				outProj = Proj(epsg_code)
-				x1,y1 = transform(inProj,outProj,bbox0[0],bbox0[1])
-				x2,y2 = transform(inProj,outProj,bbox0[2],bbox0[3])
-				bbox=[x1,y1,x2,y2]
-
-			# throw exception if the bbox is not found
-			if not bbox:
-				raise Exception("Bounding box information not found for the layer.")
-
-			return bbox
+		return bbox
 
 	def create_empty_raster(self, output_name, resolution=1000, driver='GTiff'):
 		''' This function creates an empty raster file with the provided parametres.
@@ -242,7 +227,7 @@ class Process():
 
 		# Calculate the scale
 		# "Normal" case
-		if not self.crs.ne_axis_order:
+		if not self.crs.input_ne_axis_order:
 			width = int((maxx - minx) / resolution)
 			height = int((maxy - miny) / resolution)
 			transform = rasterio.transform.from_origin(minx, maxy, resolution, resolution)
