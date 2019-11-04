@@ -73,7 +73,6 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 	print("Iteration done. Creating validation.")
 	# Open the file that we want to validate
 	result = rasterio.open(result_file)
-	pdb.set_trace()
 	if count == 0:
 		print("No features in the layer.")
 		real_data = np.zeros_like(result)
@@ -82,22 +81,22 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 			shapes,
 			out_shape=result.shape,
 			transform=result.transform,
-			dtype='int8'
+			dtype='uint8'
 		)
 
 	# Since result is binary, the comparison is 0 if some value was the same.
 	# 1 if we got false negative and -1 if we got false positive.
 	comparison = result.read(1) - real_data
-
+	#pdb.set_trace()
 	output = rasterio.open(
 		output_path,
 		'w',
 		driver='GTiff',
-		nodata=-99,
+		nodata=5,
 		height=result.height,
 		width=result.width,
 		count=1,
-		dtype='int8',
+		dtype='uint8',
 		crs=result.crs,
 		transform=result.transform
 	)
@@ -105,6 +104,11 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 	output.write(comparison, 1)
 	output.close()
 	print("Done")
+
+	#TODO: write to file instead of stdout; iterate through all np.unique
+	print("Statistics:")
+	print("correct: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][0]/np.size(comparison))))
+	print("incorrect: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][1]/np.size(comparison))))
 
 	return 0
 
