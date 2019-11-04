@@ -50,7 +50,7 @@ class Algorithm():
 		mode = stats.mode(raster, axis=None)[0][0]
 		print("raster average: ",np.average(raster))
 		
-		return np.average(raster) 
+		return np.average(raster)
 
 	def solve(self, output_path, bin_output_path):
 		eval_raster = self.raster.read()
@@ -116,7 +116,7 @@ class Algorithm():
 		
 		#TODO: replace this with something sensible
 		threshold = self.compute_threshold(eval_raster)
-
+		print("threshold is: {}".format(threshold))
 		binary_raster = eval_raster > threshold
 		#pdb.set_trace()
 		# Save the image into disk.        
