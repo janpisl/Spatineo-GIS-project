@@ -1,7 +1,6 @@
 import rasterio
 import numpy as np
 from math import floor, ceil
-import utm
 
 
 class ResultData():

@@ -10,18 +10,12 @@
 
 '''
 
-import rasterio
-import numpy as np
-from math import floor, ceil
-import xml.etree.ElementTree as ET
 import pdb
-import json
 import configparser
 import argparse
 
 from Algorithm import Algorithm
 from Validate import validate
-from Projection import Projection
 from Capabilities import Capabilities
 from InputData import InputData
 from ResultData import ResultData
@@ -35,12 +29,12 @@ class Process():
 		self.get_capabilities = Capabilities(capabilities_path)
 		self.input_data = InputData(response_file_path)
 
-		layer_name = self.input_data.get_layer_name()
-		crs = self.input_data.crs
+		self.layer_name = self.input_data.get_layer_name()
+		self.crs = self.input_data.crs
 
-		layer_bbox = self.get_capabilities.get_layer_bbox(layer_name, crs)
+		self.layer_bbox = self.get_capabilities.get_layer_bbox(self.layer_name, self.crs)
 
-		self.result = ResultData(crs, layer_bbox, '../../')
+		self.result = ResultData(self.crs, self.layer_bbox, '../../')
 		self.raster = self.result.create_empty_raster('tmp.tif')
 
 		# not tested, there might be some problems
