@@ -75,7 +75,7 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 	result = rasterio.open(result_file)
 	if count == 0:
 		print("No features in the layer.")
-		real_data = np.zeros_like(result)
+		real_data = np.zeros_like(result.read(1))
 	else:
 		real_data = rasterio.features.rasterize(
 			shapes,
@@ -87,7 +87,6 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 	# Since result is binary, the comparison is 0 if some value was the same.
 	# 1 if we got false negative and -1 if we got false positive.
 	comparison = result.read(1) - real_data
-	#pdb.set_trace()
 	output = rasterio.open(
 		output_path,
 		'w',
