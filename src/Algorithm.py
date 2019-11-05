@@ -28,7 +28,12 @@ class Algorithm():
 		returns: list of geojson elements
 		'''
 		features = []
-		for res in responses[0]['results']:
+		count = 0
+		print("Creating geojson objects.")
+		for res in responses['results']:
+			count += 1
+			if count % 1000 == 0:
+				print("Res. no {}".format(count))
 			if ('imageAnalysisResult' not in res.keys() or 'testResult' not in res.keys()
 				or res['testResult'] in ['2', '3', '4', '5']):
 				continue
@@ -56,8 +61,11 @@ class Algorithm():
 		eval_raster = self.raster.read()
 		norm_raster = np.copy(eval_raster)
 		request_counter = 0
+		print("Iterating through geojson objects...")
 		for feat in self.features:
 			request_counter += 1
+			if request_counter % 1000 == 0:
+				print("Feature no. {}".format(request_counter))
 			# this is a really dirty solution
 			#TODO: replace with a better one
 			feat_format = str(feat).replace('[[', '[[[').replace(']]', ']]]')

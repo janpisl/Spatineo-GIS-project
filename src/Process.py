@@ -34,15 +34,15 @@ class Process():
 		self.get_capabilities = Capabilities(capabilities_path)
 
 		self.requests = self.load_requests(response_file_path)
-		crs_name = self.requests[0]['layerKey']['crs']
+		crs_name = self.requests['layerKey']['crs']
 		self.crs = Projection(crs_name)
-		self.layer_name = self.requests[0]['layerKey']['layerName']
+		self.layer_name = self.requests['layerKey']['layerName']
 
 		self.layer_bbox = self.get_capabilities.get_layer_bbox(self.layer_name, self.crs)
 
 		self.raster = self.create_empty_raster('../../tmp.tif')
 		# not tested, there might be some problems
-		self.url = self.requests[0]['results'][0]['url'].split("?")[0]
+		self.url = self.requests['results'][0]['url'].split("?")[0]
 		try: 
 			self.output_raster_path = cfg.get('data', 'raster_output_path')
 		except:
