@@ -41,7 +41,7 @@ class Process():
 
 		self.layer_bbox = self.get_capabilities.get_layer_bbox(self.layer_name, self.crs)
 
-		self.result = ResultData(self.crs, self.layer_bbox, 1000, '../../')
+		self.result = ResultData(self.crs, self.layer_bbox, '../../')
 		self.raster = self.result.create_empty_raster('tmp.tif')
 		# not tested, there might be some problems
 		self.url = self.requests['results'][0]['url'].split("?")[0]

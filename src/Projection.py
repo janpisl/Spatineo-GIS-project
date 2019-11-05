@@ -11,7 +11,7 @@ class Projection():
 	def is_projected(self):
 		return self.crs.is_projected
 
-	def coordinate_unit(self):
+	def get_coordinate_unit(self):
 		return self.crs.axis_info[0].unit_name
 
 	def get_epsg(self):
