@@ -73,11 +73,14 @@ class Algorithm():
 			ref_image, ref_transform = rasterio.mask.mask(self.raster, [mapping(g)], crop=False)
 			nd = self.raster.nodata
 			mask = ref_image[0] != nd
+
+			# NOTE: The algorithm is changed to calculate negative results. The result is not yet adapted to use this.
 			if feat['imageAnalysisResult'] == 1:
-				eval_raster[0][mask] += 1
+				# eval_raster[0][mask] += 1
 				norm_raster[0][mask] += 1
 			elif (feat['imageAnalysisResult'] == 0 or feat['imageAnalysisResult'] == -1):
 				norm_raster[0][mask] += 1
+				eval_raster[0][mask] += 1
 			else:
 				#TODO: exclude responses with feat['imageTestResult'] == None
 				#this should be done earlier than here (no reason to iterate through them)
