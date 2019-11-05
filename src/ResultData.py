@@ -45,7 +45,7 @@ class ResultData():
 
 		# Calculate the scale
 		# "Normal" case
-		if not self.crs.input_ne_axis_order or self.crs.get_first_axis_direction() == 'east':
+		if self.crs.is_first_axis_east():
 			width = int((maxx - minx) / self.resolution)
 			height = int((maxy - miny) / self.resolution)
 			transform = rasterio.transform.from_origin(minx, maxy, self.resolution, self.resolution)

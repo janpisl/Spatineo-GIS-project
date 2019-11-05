@@ -10,42 +10,17 @@ from scipy import stats
 #pdb.set_trace()
 
 class Algorithm():
-	def __init__(self, raster, responses, service):
+	def __init__(self, raster, input_data, service):
 		'''
 		args:
 			raster = empty raster
-			responses = a list of responses ('results' in the data file) for one layer key
+			input_data = inputdata -object that contains all responses
 			service = WMS/WFS
 		'''	
 		self.raster = rasterio.open(raster)
 		self.service = service
-		self.features = self.parse_responses_to_geojson(responses)
+		self.features = input_data.get_bboxes_as_geojson()
 		
-	def parse_responses_to_geojson(self, responses):
-		''' This method converts response file to geojson geometries. imageAnalysisResult is included to the geojson features.
-		args:
-			responses: parsed response file
-		returns: list of geojson elements
-		'''
-		features = []
-		count = 0
-		print("Creating geojson objects.")
-		for res in responses['results']:
-			count += 1
-			if count % 1000 == 0:
-				print("Res. no {}".format(count))
-			if ('imageAnalysisResult' not in res.keys() or 'testResult' not in res.keys()
-				or res['testResult'] in ['2', '3', '4', '5']):
-				continue
-			# Convert bbox as a list.
-			bbox = list(map(float, res['bBox'].split(',')))
-			# Create a closed Polygon following the edges of the bbox.
-			feat = Polygon([(bbox[0], bbox[1]), (bbox[0], bbox[3]), (bbox[2], bbox[3]), (bbox[2], bbox[1]), (bbox[0], bbox[1])])
-			# Store imageTestResult to the feature.
-			feat['imageAnalysisResult'] = res['imageAnalysisResult']
-			feat['testResult'] = res['testResult']
-			features.append(feat)
-		return features
 
 	def compute_threshold(self, raster):
 		'''mode = stats.mode(raster, axis=None)[0][0]

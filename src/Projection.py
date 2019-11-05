@@ -1,10 +1,10 @@
 from pyproj import CRS, Transformer
 
 class Projection():
-	def __init__(self, name, input_ne_axis_order=False):
+	def __init__(self, name, manual_first_axis_direction=None):
 		self.name = name
 		self.crs = CRS(name)
-		self.input_ne_axis_order = input_ne_axis_order
+		self.manual_first_axis_direction = manual_first_axis_direction
 		self.from_wgs84_transformer = Transformer.from_crs("EPSG:4326", self.crs)
 		self.to_web_mercator_transformer = Transformer.from_crs(self.crs, 3857)
 
@@ -23,8 +23,9 @@ class Projection():
 	def convert_to_web_mercator(self, x, y):
 		return self.to_web_mercator_transformer.transform(x, y)
 
-	def get_first_axis_direction(self):
-		return self.crs.axis_info[0].direction
+	def is_first_axis_east(self):
+		dir = self.manual_first_axis_direction if self.manual_first_axis_direction else self.crs.axis_info[0].direction.lower()
+		return dir.lower() == 'east'
 
 def change_bbox_axis_order(bbox):
 	""" Flip the axis order of the given bbox. """

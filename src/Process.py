@@ -18,12 +18,12 @@ import pdb
 import json
 import configparser
 import argparse
-import utm
 
 from Algorithm import Algorithm
 from Validate import validate
 from Projection import Projection
 from Capabilities import Capabilities
+from InputData import InputData
 from ResultData import ResultData
 
 class Process():
@@ -33,18 +33,18 @@ class Process():
 		capabilities_path = cfg.get('data', 'get_capabilities')
 		
 		self.get_capabilities = Capabilities(capabilities_path)
+		self.input_data = InputData(response_file_path)
 
-		self.requests = self.load_requests(response_file_path)
-		crs_name = self.requests['layerKey']['crs']
-		self.crs = Projection(crs_name)
-		self.layer_name = self.requests['layerKey']['layerName']
+		layer_name = self.input_data.get_layer_name()
+		crs = self.input_data.crs
 
-		self.layer_bbox = self.get_capabilities.get_layer_bbox(self.layer_name, self.crs)
+		layer_bbox = self.get_capabilities.get_layer_bbox(layer_name, crs)
 
-		self.result = ResultData(self.crs, self.layer_bbox, '../../')
+		self.result = ResultData(crs, layer_bbox, '../../')
 		self.raster = self.result.create_empty_raster('tmp.tif')
+
 		# not tested, there might be some problems
-		self.url = self.requests['results'][0]['url'].split("?")[0]
+		self.url = self.input_data.get_request_url()
 		try: 
 			self.output_raster_path = cfg.get('data', 'raster_output_path')
 		except:
@@ -54,18 +54,9 @@ class Process():
 		except:
 			self.bin_raster_path = '../../bin_out.tif'
 
-
-
-	def load_requests(self, path):
-		with open(path) as source:
-			requests = json.load(source)
-
-		return requests
-
-
 	def run_algorithm(self):
 
-		a = Algorithm(self.raster, self.requests, self.get_capabilities.service_type)
+		a = Algorithm(self.raster, self.input_data, self.get_capabilities.service_type)
 
 		return a.solve(self.output_raster_path, self.bin_raster_path)
 
