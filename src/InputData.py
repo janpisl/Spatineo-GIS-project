@@ -1,5 +1,5 @@
 import json
-from geojson import Polygon
+from geojson import Polygon, Feature, FeatureCollection
 
 from Projection import Projection
 
@@ -39,11 +39,21 @@ class InputData():
 			bbox = list(map(float, res['bBox'].split(',')))
 			# Create a closed Polygon following the edges of the bbox.
 			if self.crs.is_first_axis_east():
-				feat = Polygon([[(bbox[0], bbox[1]), (bbox[0], bbox[3]), (bbox[2], bbox[3]), (bbox[2], bbox[1]), (bbox[0], bbox[1])]])
+				g = Polygon([[(bbox[0], bbox[1]), (bbox[0], bbox[3]), (bbox[2], bbox[3]), (bbox[2], bbox[1]), (bbox[0], bbox[1])]])
 			else:
-				feat = Polygon([[(bbox[1], bbox[0]), (bbox[3], bbox[0]), (bbox[3], bbox[2]), (bbox[1], bbox[2]), (bbox[1], bbox[0])]])
-			# Store imageTestResult to the feature.
-			feat['imageAnalysisResult'] = res['imageAnalysisResult']
-			feat['testResult'] = res['testResult']
+				g = Polygon([[(bbox[1], bbox[0]), (bbox[3], bbox[0]), (bbox[3], bbox[2]), (bbox[1], bbox[2]), (bbox[1], bbox[0])]])
+			# Save other data
+			props = {
+				'imageAnalysisResult': res['imageAnalysisResult'],
+				'testResult': res['testResult'],
+				'requestTime': res['requestTime']
+			}
+			feat = Feature(geometry = g, properties = props)
+			
 			features.append(feat)
-		return features
+
+		feat_c = FeatureCollection(features)
+		
+		with open('../data.geojson', 'w') as outfile:
+			json.dump(feat_c, outfile)
+		return feat_c

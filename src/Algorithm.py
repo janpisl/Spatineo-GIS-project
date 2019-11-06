@@ -3,7 +3,6 @@ import rasterio.mask
 import json
 from geojson import Polygon
 import pdb
-from shapely.geometry import shape, mapping
 import numpy as np
 from scipy import stats
 
@@ -37,28 +36,26 @@ class Algorithm():
 		norm_raster = np.copy(eval_raster)
 		request_counter = 0
 		print("Iterating through geojson objects...")
-		for feat in self.features:
+		for feat in self.features['features']:
 			request_counter += 1
 			if request_counter % 1000 == 0:
 				print("Feature no. {}".format(request_counter))
-			# this is a really dirty solution
-			#TODO: replace with a better one
-			g = shape(feat)
-			ref_image, ref_transform = rasterio.mask.mask(self.raster, [mapping(g)], crop=False)
+			ref_image, ref_transform = rasterio.mask.mask(self.raster, [feat['geometry']], crop=False)
 			nd = self.raster.nodata
 			mask = ref_image[0] != nd
 
 			# NOTE: The algorithm is changed to calculate negative results. The result is not yet adapted to use this.
-			if feat['imageAnalysisResult'] == 1:
+			props = feat['properties']
+			if props['imageAnalysisResult'] == 1:
 				# eval_raster[0][mask] += 1
 				norm_raster[0][mask] += 1
-			elif (feat['imageAnalysisResult'] == 0 or feat['imageAnalysisResult'] == -1):
+			elif (props['imageAnalysisResult'] == 0 or props['imageAnalysisResult'] == -1):
 				norm_raster[0][mask] += 1
 				eval_raster[0][mask] += 1
 			else:
 				#TODO: exclude responses with feat['imageTestResult'] == None
 				#this should be done earlier than here (no reason to iterate through them)
-				print("unexpected imageTestResult value: {}".format(feat['imageAnalysisResult']))
+				print("unexpected imageTestResult value: {}".format(props['imageAnalysisResult']))
 				print(feat)
 			
 			#if i == 1000:
