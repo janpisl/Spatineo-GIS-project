@@ -45,13 +45,13 @@ class ResultData():
 		# Calculate the scale
 		# "Normal" case
 		if self.crs.is_first_axis_east():
-			width = int((maxx - minx) / self.resolution)
-			height = int((maxy - miny) / self.resolution)
+			width = round((maxx - minx) / self.resolution)
+			height = round((maxy - miny) / self.resolution)
 			transform = rasterio.transform.from_origin(minx, maxy, self.resolution, self.resolution)
 		# If north axis is given first.
 		else:
-			height = int((maxx - minx) / self.resolution)
-			width = int((maxy - miny) / self.resolution)
+			height = round((maxx - minx) / self.resolution)
+			width = round((maxy - miny) / self.resolution)
 			transform = rasterio.transform.from_origin(miny, maxx, self.resolution, self.resolution)
 
 		# Init raster with zeros.
