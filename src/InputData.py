@@ -39,9 +39,9 @@ class InputData():
 			bbox = list(map(float, res['bBox'].split(',')))
 			# Create a closed Polygon following the edges of the bbox.
 			if self.crs.is_first_axis_east():
-				feat = Polygon([(bbox[0], bbox[1]), (bbox[0], bbox[3]), (bbox[2], bbox[3]), (bbox[2], bbox[1]), (bbox[0], bbox[1])])
+				feat = Polygon([[(bbox[0], bbox[1]), (bbox[0], bbox[3]), (bbox[2], bbox[3]), (bbox[2], bbox[1]), (bbox[0], bbox[1])]])
 			else:
-				feat = Polygon([(bbox[1], bbox[0]), (bbox[3], bbox[0]), (bbox[3], bbox[2]), (bbox[1], bbox[2]), (bbox[1], bbox[0])])
+				feat = Polygon([[(bbox[1], bbox[0]), (bbox[3], bbox[0]), (bbox[3], bbox[2]), (bbox[1], bbox[2]), (bbox[1], bbox[0])]])
 			# Store imageTestResult to the feature.
 			feat['imageAnalysisResult'] = res['imageAnalysisResult']
 			feat['testResult'] = res['testResult']

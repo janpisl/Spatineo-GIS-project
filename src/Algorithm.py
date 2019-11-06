@@ -43,8 +43,7 @@ class Algorithm():
 				print("Feature no. {}".format(request_counter))
 			# this is a really dirty solution
 			#TODO: replace with a better one
-			feat_format = str(feat).replace('[[', '[[[').replace(']]', ']]]')
-			g = shape(json.loads(feat_format))
+			g = shape(feat)
 			ref_image, ref_transform = rasterio.mask.mask(self.raster, [mapping(g)], crop=False)
 			nd = self.raster.nodata
 			mask = ref_image[0] != nd
