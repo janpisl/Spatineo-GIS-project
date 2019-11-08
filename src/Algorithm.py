@@ -1,7 +1,10 @@
 import rasterio
 import rasterio.mask
 import json
-from geojson import Polygon
+from geojson import Feature
+from shapely.geometry import shape, MultiPolygon, asShape
+from shapely.ops import cascaded_union
+
 import pdb
 import numpy as np
 from scipy import stats
@@ -118,6 +121,47 @@ class Algorithm():
 		bin_output.close()
 
 
+	def solve_simple(self, output_path, bin_output_path):
+		
+		pos_shape = None
+		# shapely.geometry.asShape(self.features['features'][0]['geometry'])
+		neg_shape = None
+		
+		request_counter = 0
+		print("Iterating through geojson objects...")
+		for feat in self.features['features']:
+			request_counter += 1
+			if request_counter % 1000 == 0:
+				print("Feature no. {}".format(request_counter))
+			shp = shape(feat['geometry'])
+			res = feat['properties']['imageAnalysisResult']
+			if res == 1:
+				if not pos_shape:
+					pos_shape = asShape(shp)
+				else:
+					pos_shape.union(shp)
+			elif res == 0:
+				if not neg_shape:
+					neg_shape = asShape(shp)
+				neg_shape.union(shp)
+
+		print('merged!')
+		result = pos_shape.difference(neg_shape)
+
+		neg_feat = Feature(geometry=neg_shape, properties={})
+		
+		with open('../result_neg.geojson', 'w') as outfile:
+			json.dump(neg_feat, outfile)
+
+		pos_feat = Feature(geometry=pos_shape, properties={})
+		
+		with open('../result_pos.geojson', 'w') as outfile:
+			json.dump(pos_feat, outfile)
+
+		res_feat = Feature(geometry=result, properties={})
+		
+		with open('../result_union.geojson', 'w') as outfile:
+			json.dump(res_feat, outfile)
 
 
 if __name__ == '__main__':
