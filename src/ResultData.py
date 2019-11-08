@@ -2,6 +2,9 @@ import rasterio
 import numpy as np
 from math import floor, ceil
 
+import logging
+# logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(level=logging.INFO)
 
 class ResultData():
 	

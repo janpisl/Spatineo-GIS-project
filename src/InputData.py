@@ -1,6 +1,10 @@
 import json
 from geojson import Polygon, Feature, FeatureCollection
 
+import logging
+# logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(level=logging.INFO)
+
 from Projection import Projection
 
 class InputData():

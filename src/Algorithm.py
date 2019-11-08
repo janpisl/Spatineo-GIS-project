@@ -10,6 +10,10 @@ import pdb
 import numpy as np
 from scipy import stats
 
+import logging
+# logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(level=logging.INFO)
+
 #pdb.set_trace()
 
 class Algorithm():
@@ -31,7 +35,7 @@ class Algorithm():
 		mask = raster > (2*std +mode)
 		avg = np.average(raster[0][mask])'''
 		mode = stats.mode(raster, axis=None)[0][0]
-		print("raster average: ",np.average(raster))
+		logging.debug("raster average: ",np.average(raster))
 		
 		return np.average(raster)
 
@@ -39,11 +43,11 @@ class Algorithm():
 		eval_raster = self.raster.read()
 		norm_raster = np.copy(eval_raster)
 		request_counter = 0
-		print("Iterating through geojson objects...")
+		logging.info("Iterating through geojson objects...")
 		for feat in self.features['features']:
 			request_counter += 1
 			if request_counter % 1000 == 0:
-				print("Feature no. {}".format(request_counter))
+				logging.debug("Feature no. {}".format(request_counter))
 			ref_image, ref_transform = rasterio.mask.mask(self.raster, [feat['geometry']], crop=False)
 			nd = self.raster.nodata
 			mask = ref_image[0] != nd
@@ -59,14 +63,14 @@ class Algorithm():
 			else:
 				#TODO: exclude responses with feat['imageTestResult'] == None
 				#this should be done earlier than here (no reason to iterate through them)
-				print("unexpected imageTestResult value: {}".format(props['imageAnalysisResult']))
-				print(feat)
+				logging.warning("unexpected imageTestResult value: {}".format(props['imageAnalysisResult']))
+				logging.warning(feat)
 			
 			#if i == 1000:
 			#    ref_image_out = ref_image
 			#i = i + 1
 		eval_raster = np.divide(eval_raster, norm_raster, out=np.zeros_like(eval_raster), where=norm_raster != 0)
-		print("there was {} requests".format(request_counter))
+		logging.info("there was {} requests".format(request_counter))
 		# Save the image into disk.     
 		img_output = rasterio.open(
 			output_path,
@@ -81,8 +85,9 @@ class Algorithm():
 			transform=self.raster.transform,)   
 		img_output.write(eval_raster)
 		img_output.close()
-		print("norm average: ",np.average(norm_raster))
+		logging.debug("norm average: ",np.average(norm_raster))
 
+		'''
 		img_output = rasterio.open(
 			"../../output_data/norm_raster24274.tif",
 			'w',
@@ -95,15 +100,12 @@ class Algorithm():
 			crs=self.raster.crs,
 			transform=self.raster.transform,)   
 		img_output.write(norm_raster)
-		img_output.close()
-
-		test = rasterio.open(output_path)
-		test_raster = test.read()
+		img_output.close()'''
 		
 		#TODO: replace this with something sensible
 		threshold = self.compute_threshold(eval_raster)
-		print("threshold is: {}".format(threshold))
-		binary_raster = eval_raster > threshold
+		logging.debug("threshold is: {}".format(threshold))
+		binary_raster = eval_raster < threshold
 		#pdb.set_trace()
 		# Save the image into disk.        
 		bin_output = rasterio.open(
@@ -130,7 +132,7 @@ class Algorithm():
 		pos_geom = ogr.Geometry(ogr.wkbMultiPolygon)
 		neg_geom = ogr.Geometry(ogr.wkbMultiPolygon)
 		request_counter = 0
-		print("Iterating through geojson objects...")
+		logging.info("Iterating through geojson objects...")
 		for feat in self.features['features']:
 			request_counter += 1
 			if request_counter % 1000 == 0:
@@ -144,9 +146,9 @@ class Algorithm():
 					pos_geom.AddGeometry(pos_tmp)
 					neg_geom.AddGeometry(neg_tmp)
 				except:
-					print('error')
+					logging.error('error')
 				# pdb.set_trace()
-				print("Feature no. {}".format(request_counter))
+				logging.debug("Feature no. {}".format(request_counter))
 			
 			geom = ogr.CreateGeometryFromJson(json.dumps(feat['geometry']))
 			# pdb.set_trace()
@@ -167,10 +169,10 @@ class Algorithm():
 					# neg_shape.append(geom)
 					neg_geom.AddGeometry(geom)
 			except:
-				print('Error')
+				logging.error('Error')
 
 
-		print('merged!')
+		logging.info('merged!')
 		# pos_geom = ogr.Geometry(ogr.wkbMultiPolygon)
 		# neg_geom = ogr.Geometry(ogr.wkbMultiPolygon)
 		# pos = cascaded_union(pos_shape)
