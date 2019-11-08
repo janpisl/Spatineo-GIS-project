@@ -6,6 +6,9 @@ import pdb
 import configparser
 import argparse
 
+import logging
+# logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(level=logging.INFO)
 
 '''
 [validation]
@@ -48,18 +51,18 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 	if not layer:
 		raise Exception("Couldn't find layer in service")
 
-	print("Layer: {}, Features: {}".format(layer.GetName(), layer.GetFeatureCount()))
+	logging.info("Layer: {}, Features: {}".format(layer.GetName(), layer.GetFeatureCount()))
 
 	# iterate over features
 
-	print("Start iteration through features.")
+	logging.info("Start iteration through features.")
 
 	feat = layer.GetNextFeature()
 	count = 0
 	while feat is not None:
 		count += 1
 		if count % 100 == 0:
-			print("Feature: {}".format(count))
+			logging.info("Feature: {}".format(count))
 		geom = feat.GetGeometryRef()
 		json_feat = geojson.loads(geom.ExportToJson())
 		shapes.append(json_feat)
@@ -70,11 +73,11 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 
 	# Close the connection
 	wfs_ds = None
-	print("Iteration done. Creating validation.")
+	logging.info("Iteration done. Creating validation.")
 	# Open the file that we want to validate
 	result = rasterio.open(result_file)
 	if count == 0:
-		print("No features in the layer.")
+		logging.info("No features in the layer.")
 		real_data = np.zeros_like(result.read(1))
 	else:
 		real_data = rasterio.features.rasterize(
@@ -102,12 +105,15 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 
 	output.write(comparison, 1)
 	output.close()
-	print("Done")
+	logging.info("Done")
 
 	#TODO: write to file instead of stdout; iterate through all np.unique
-	print("Statistics:")
-	print("correct: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][0]/np.size(comparison))))
-	print("incorrect: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][1]/np.size(comparison))))
+	logging.info("Statistics:")
+	if len(np.unique(comparison, return_counts = True)[1]) > 2:
+		logging.warning("statistics are incomplete")
+
+	logging.info("correct: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][0]/np.size(comparison))))
+	logging.info("incorrect: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][1]/np.size(comparison))))
 
 	return 0
 
