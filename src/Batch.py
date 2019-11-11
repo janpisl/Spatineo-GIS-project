@@ -11,7 +11,6 @@ from Validate import validate
 import datetime
 logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H:%M:%S") + '.log', level=logging.INFO)
 
-
 def run_batch(cfg):
 
 	directory = cfg.get('data', 'response_file')

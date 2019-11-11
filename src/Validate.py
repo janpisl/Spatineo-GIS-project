@@ -41,6 +41,9 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 	gdal.SetConfigOption('OGR_WFS_PAGING_ALLOWED', 'YES')
 	gdal.SetConfigOption('OGR_WFS_PAGE_SIZE', '10000')
 
+	# Fix for SSL connection errors
+	gdal.SetConfigOption('GDAL_HTTP_UNSAFESSL', 'YES')
+
 	# Open the webservice
 	req_url = "{}?service=wfs&version=2.0.0&srsName={}&BBOX={}".format(url, srs, bbox_str)
 	wfs_ds = wfs_drv.Open('WFS:' + req_url)
@@ -69,7 +72,7 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 		count += 1
 		if count % 100 == 0:
 			logging.info("Feature: {}".format(count))
-		geom = feat.GetGeometryRef()
+		geom = feat.GetGeometryRef().GetLinearGeometry()
 		json_feat = geojson.loads(geom.ExportToJson())
 		shapes.append(json_feat)
 
