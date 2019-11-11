@@ -4,6 +4,8 @@ import json
 from geojson import Feature
 from shapely.geometry import shape, MultiPolygon, asShape
 from shapely.ops import cascaded_union
+import ogr
+
 import pdb
 import numpy as np
 from scipy import stats
@@ -124,46 +126,81 @@ class Algorithm():
 
 	def solve_simple(self, output_path, bin_output_path):
 		
-		pos_shape = None
+		pos_shape = []
 		# shapely.geometry.asShape(self.features['features'][0]['geometry'])
-		neg_shape = None
-		
+		neg_shape = []
+		pos_geom = ogr.Geometry(ogr.wkbMultiPolygon)
+		neg_geom = ogr.Geometry(ogr.wkbMultiPolygon)
 		request_counter = 0
 		logging.info("Iterating through geojson objects...")
 		for feat in self.features['features']:
 			request_counter += 1
 			if request_counter % 1000 == 0:
+				
+				pos_tmp = pos_geom.UnionCascaded()
+				neg_tmp = neg_geom.UnionCascaded()
+
+				try:
+					pos_geom = ogr.Geometry(ogr.wkbMultiPolygon)
+					neg_geom = ogr.Geometry(ogr.wkbMultiPolygon)
+					pos_geom.AddGeometry(pos_tmp)
+					neg_geom.AddGeometry(neg_tmp)
+				except:
+					logging.error('error')
+				# pdb.set_trace()
 				logging.debug("Feature no. {}".format(request_counter))
-			shp = shape(feat['geometry'])
+			
+			geom = ogr.CreateGeometryFromJson(json.dumps(feat['geometry']))
+			# pdb.set_trace()
+			# shp = shape(feat['geometry'])
 			res = feat['properties']['imageAnalysisResult']
-			if res == 1:
-				if not pos_shape:
-					pos_shape = asShape(shp)
-				else:
-					pos_shape.union(shp)
-			elif res == 0:
-				if not neg_shape:
-					neg_shape = asShape(shp)
-				neg_shape.union(shp)
+			try:
+				if res == 1:
+					# if not pos_shape:
+					# 	pos_shape = asShape(shp)
+					# else:
+					# 	pos_shape.union(shp)
+					pos_geom.AddGeometry(geom)
+				elif res == 0:
+					# if not neg_shape:
+					# 	neg_shape = asShape(shp)
+					# else:
+					# 	neg_shape.union(shp)
+					# neg_shape.append(geom)
+					neg_geom.AddGeometry(geom)
+			except:
+				logging.error('Error')
 
-		# what does merged mean?
+
 		logging.info('merged!')
-		result = pos_shape.difference(neg_shape)
+		# pos_geom = ogr.Geometry(ogr.wkbMultiPolygon)
+		# neg_geom = ogr.Geometry(ogr.wkbMultiPolygon)
+		# pos = cascaded_union(pos_shape)
+		# neg = cascaded_union(neg_shape)
 
-		neg_feat = Feature(geometry=neg_shape, properties={})
+		pos = pos_geom.UnionCascaded()
+		neg = neg_geom.UnionCascaded()
+
+		# result = pos.Difference(neg)
+		# pdb.set_trace()
+		# neg_feat = Feature(geometry=neg, properties={})
 		
 		with open('../result_neg.geojson', 'w') as outfile:
-			json.dump(neg_feat, outfile)
+			outfile.write(neg.ExportToJson())
+			# json.dump(neg_feat, outfile)
 
-		pos_feat = Feature(geometry=pos_shape, properties={})
+		# pos_feat = Feature(geometry=pos, properties={})
 		
 		with open('../result_pos.geojson', 'w') as outfile:
-			json.dump(pos_feat, outfile)
+			outfile.write(pos.ExportToJson())
 
-		res_feat = Feature(geometry=result, properties={})
+			# json.dump(pos_feat, outfile)
+
+		# res_feat = Feature(geometry=result, properties={})
 		
-		with open('../result_union.geojson', 'w') as outfile:
-			json.dump(res_feat, outfile)
+		# with open('../result_union.geojson', 'w') as outfile:
+		# 	outfile.write(result.ExportToJson())
+			# json.dump(res_feat, outfile)
 
 
 if __name__ == '__main__':

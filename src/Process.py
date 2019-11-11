@@ -20,7 +20,6 @@ logging.basicConfig(level=logging.INFO)
 
 from Algorithm import Algorithm
 from Validate import validate
-from Capabilities import Capabilities
 from InputData import InputData
 from ResultData import ResultData
 
@@ -30,15 +29,12 @@ class Process():
 		response_file_path = cfg.get('data', 'response_file')
 		capabilities_path = cfg.get('data', 'get_capabilities')
 		
-		self.get_capabilities = Capabilities(capabilities_path)
-		self.input_data = InputData(response_file_path)
+		self.input_data = InputData(response_file_path, capabilities_path)
 
 		self.layer_name = self.input_data.get_layer_name()
-		self.crs = self.input_data.crs
+		self.layer_bbox = self.input_data.get_capabilities_bbox()
 
-		self.layer_bbox = self.get_capabilities.get_layer_bbox(self.layer_name, self.crs)
-
-		self.result = ResultData(self.crs, self.layer_bbox, '../../')
+		self.result = ResultData(self.input_data.crs, self.layer_bbox, '../../')
 		self.raster = self.result.create_empty_raster('tmp.tif')
 
 		# not tested, there might be some problems
@@ -54,7 +50,7 @@ class Process():
 
 	def run_algorithm(self):
 
-		a = Algorithm(self.raster, self.input_data, self.get_capabilities.service_type)
+		a = Algorithm(self.raster, self.input_data, self.input_data.capabilities.service_type)
 
 		return a.solve(self.output_raster_path, self.bin_raster_path)
 
@@ -74,4 +70,4 @@ if __name__ == '__main__':
 	process.run_algorithm()
 	
 	# validation of the result. 
-	validate(process.url, process.layer_name, process.crs.name, process.layer_bbox, process.bin_raster_path, "../../validation21764.tif")
+	validate(process.url, process.layer_name, process.input_data.crs.name, process.layer_bbox, process.bin_raster_path, "../../validation21764.tif")
