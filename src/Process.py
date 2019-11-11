@@ -14,6 +14,10 @@ import pdb
 import configparser
 import argparse
 
+import logging
+# logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
+logging.basicConfig(level=logging.INFO)
+
 from Algorithm import Algorithm
 from Validate import validate
 from Capabilities import Capabilities
@@ -57,6 +61,7 @@ class Process():
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
+
 	parser.add_argument("path_to_config", help="Path to the file containing configuration.")
 	args = parser.parse_args()
 
