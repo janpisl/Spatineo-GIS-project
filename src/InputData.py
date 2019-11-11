@@ -4,7 +4,7 @@ from geojson import Polygon, Feature, FeatureCollection
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
 import datetime
-logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H:%M:%S")' + .log', level=logging.INFO)
+logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H:%M:%S") + '.log', level=logging.INFO)
 
 from Projection import Projection, change_bbox_axis_order
 from Capabilities import Capabilities
