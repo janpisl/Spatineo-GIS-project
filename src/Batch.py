@@ -34,7 +34,7 @@ def run_batch(cfg):
 		process = Process(config)
 		process.run_algorithm()
 		# validation of the result. 
-		validate(process.url, process.layer_name, process.input_data.crs.name, process.layer_bbox, process.bin_raster_path, "../../validation" + file + ".tif")
+		validate(process.url, process.layer_name, process.input_data.crs.name, process.layer_bbox, process.bin_raster_path, "../../output_data/validation" + file + ".tif")
 		logging.info("file {} done \n \n".format(file))
 
 
