@@ -2,7 +2,7 @@ from pyproj import CRS, Transformer
 
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(filename='example.log', level=logging.INFO)
 
 class Projection():
 	def __init__(self, name, manual_first_axis_direction=None):

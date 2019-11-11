@@ -12,7 +12,7 @@ from scipy import stats
 
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(filename='example.log', level=logging.INFO)
 
 #pdb.set_trace()
 

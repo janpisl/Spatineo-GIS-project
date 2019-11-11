@@ -3,7 +3,7 @@ from geojson import Polygon, Feature, FeatureCollection
 
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(filename='example.log', level=logging.INFO)
 
 from Projection import Projection, change_bbox_axis_order
 from Capabilities import Capabilities
@@ -11,6 +11,7 @@ from Capabilities import Capabilities
 class InputData():
 	
 	def __init__(self, response_file_path, capabilities_path):
+
 		with open(response_file_path) as source:
 			requests = json.load(source)
 		self.layer_key = requests['layerKey']
@@ -96,6 +97,6 @@ class InputData():
 
 		feat_c = FeatureCollection(features)
 		
-		with open('../data.geojson', 'w') as outfile:
-			json.dump(feat_c, outfile)
+		#with open('../data.geojson', 'w') as outfile:
+		#	json.dump(feat_c, outfile)
 		return feat_c
