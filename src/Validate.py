@@ -25,6 +25,8 @@ validation_file = /Users/juhohanninen/spatineo/validation.tif
 '''
 
 def validate(url, layer_name, srs, bbox, result_file, output_path):
+	
+	logging.info("validation starts at {}".format(datetime.datetime.now()))
 
 	# Set the driver (optional)
 	wfs_drv = ogr.GetDriverByName('WFS')
@@ -103,7 +105,7 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 		output_path,
 		'w',
 		driver='GTiff',
-		nodata=5,
+		nodata=99,
 		height=result.height,
 		width=result.width,
 		count=1,
@@ -114,15 +116,21 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 
 	output.write(comparison, 1)
 	output.close()
-	logging.info("Done")
 
-	#TODO: write to file instead of stdout; iterate through all np.unique
 	logging.info("Statistics:")
-	if len(np.unique(comparison, return_counts = True)[1]) > 2:
-		logging.warning("statistics are incorrect. Tell Jan to finish his task!")
+	logging.info("This is the np.unique count: {}".format(np.unique(comparison, return_counts = True)[1]))
 
-	logging.info("correct: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][0]/np.size(comparison))))
-	logging.info("incorrect: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][1]/np.size(comparison))))
+	for i in range(len(np.unique(comparison, return_counts = True)[0])):
+		if np.unique(comparison, return_counts = True)[0][i] == 0:
+			logging.info("Correct: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][i]/np.size(comparison))))
+		elif np.unique(comparison, return_counts = True)[0][i] == 1:
+			logging.info("False positives: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][i]/np.size(comparison))))
+		# this is supposed to be -1 but since uint8 is 0 to 255 it underflows and makes it 255	
+		elif np.unique(comparison, return_counts = True)[0][i] == 255:
+			logging.info("False negatives: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][i]/np.size(comparison))))		
+		else:
+			raise Exception("Unexpected values in the validation raster: {}".format(np.unique(comparison, return_counts = True)[0]))
+
 
 	return 0
 
