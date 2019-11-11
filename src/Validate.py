@@ -9,7 +9,7 @@ import argparse
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
 import datetime
-logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H:%M:%S")' + .log', level=logging.INFO)
+logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H:%M:%S") + '.log', level=logging.INFO)
 
 
 
@@ -64,6 +64,7 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 
 	feat = layer.GetNextFeature()
 	count = 0
+
 	while feat is not None:
 		count += 1
 		if count % 100 == 0:
@@ -115,7 +116,7 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 	#TODO: write to file instead of stdout; iterate through all np.unique
 	logging.info("Statistics:")
 	if len(np.unique(comparison, return_counts = True)[1]) > 2:
-		logging.warning("statistics are incomplete")
+		logging.warning("statistics are incorrect. Tell Jan to finish his task!")
 
 	logging.info("correct: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][0]/np.size(comparison))))
 	logging.info("incorrect: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][1]/np.size(comparison))))
