@@ -4,7 +4,8 @@ from math import floor, ceil
 
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
-logging.basicConfig(filename='example.log', level=logging.INFO)
+import datetime
+logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H:%M:%S")' + .log', level=logging.INFO)
 
 class ResultData():
 	

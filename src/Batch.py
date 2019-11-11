@@ -8,7 +8,8 @@ from Process import Process
 from pathlib import Path
 from Validate import validate
 
-logging.basicConfig(filename='example.log', level=logging.INFO)
+import datetime
+logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H:%M:%S")' + .log', level=logging.INFO)
 
 
 

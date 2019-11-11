@@ -8,7 +8,11 @@ import argparse
 
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
-logging.basicConfig(filename='example.log', level=logging.INFO)
+import datetime
+logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H:%M:%S")' + .log', level=logging.INFO)
+
+
+
 
 '''
 [validation]
@@ -41,8 +45,9 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 	req_url = "{}?service=wfs&version=2.0.0&srsName={}&BBOX={}".format(url, srs, bbox_str)
 	wfs_ds = wfs_drv.Open('WFS:' + req_url)
 	if not wfs_ds:
-		raise Exception("Couldn't open connection to the server.")
-
+		logging.error("Couldn't open connection to the server.")
+		#raise Exception("Couldn't open connection to the server.")
+		return -1
 
 	shapes = []
 

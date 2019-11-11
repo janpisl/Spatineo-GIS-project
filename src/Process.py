@@ -16,7 +16,8 @@ import argparse
 
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
-logging.basicConfig(filename='example.log', level=logging.INFO)
+import datetime
+logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H:%M:%S")' + .log', level=logging.INFO)
 
 from Algorithm import Algorithm
 from Validate import validate
