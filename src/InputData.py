@@ -51,7 +51,7 @@ class InputData():
 
 			# Filter out invalid test results
 			if ('imageAnalysisResult' not in res.keys() or 'testResult' not in res.keys()
-				or res['testResult'] in ['2', '3', '4', '5']):
+				or res['testResult'] != 0):
 				invalid_request_count += 1
 				continue
 
