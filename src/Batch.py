@@ -10,7 +10,7 @@ from pathlib import Path
 from Validate import validate
 
 import datetime
-logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H:%M:%S") + '.log', level=logging.INFO)
+logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") + '.log', level=logging.INFO)
 
 def handler(signum, frame):
    logging.error ("validation took so long - terminated")
