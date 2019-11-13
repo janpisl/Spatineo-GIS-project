@@ -81,8 +81,8 @@ class Capabilities():
 						for item in range(len(bbox)):
 							bbox[item] = float(bbox[item])
 
-					# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
-					break
+						# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
+						break
 
 
 
