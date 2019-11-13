@@ -89,20 +89,6 @@ class Algorithm():
 		img_output.close()
 		logging.debug("norm average: ",np.average(norm_raster))
 
-		'''
-		img_output = rasterio.open(
-			"../../output_data/norm_raster24274.tif",
-			'w',
-			driver='GTiff',
-			nodata=nd,
-			height=self.raster.height,
-			width = self.raster.width,
-			count=1,
-			dtype = self.raster.dtypes[0],
-			crs=self.raster.crs,
-			transform=self.raster.transform,)   
-		img_output.write(norm_raster)
-		img_output.close()'''
 		
 		#TODO: replace this with something sensible
 		threshold = self.compute_threshold(eval_raster)
