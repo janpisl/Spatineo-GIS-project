@@ -3,7 +3,6 @@ import argparse
 import pdb
 import glob
 import logging
-import signal
 
 from Process import Process
 from pathlib import Path
@@ -11,10 +10,6 @@ from Validate import validate
 
 import datetime
 logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H:%M:%S") + '.log', level=logging.INFO)
-
-def handler(signum, frame):
-   logging.error ("validation took so long - terminated")
-   raise Exception("validation took so long - terminated")
 
 
 def run_batch(cfg):
@@ -24,7 +19,6 @@ def run_batch(cfg):
 	raster_output_path = cfg.get('data', 'raster_output_path')
 	binary_raster_output_path = cfg.get('data', 'binary_raster_output_path')
 
-	signal.signal(signal.SIGALRM, handler)
 
 	for file_path in glob.glob(directory + '*.json'):
 		file = Path(file_path).stem
@@ -41,14 +35,10 @@ def run_batch(cfg):
 		process = Process(config)
 		process.run_algorithm()
 
-		signal.alarm(300)
-		try:
-			# validation of the result. 
-			validate(process.url, process.layer_name, process.input_data.crs.name, process.layer_bbox, process.bin_raster_path, "../../output_data/validation" + file + ".tif")
-		except Exception as e:
-			print(e)
+		# validation of the result. 
+		validate(process.url, process.layer_name, process.input_data.crs.name, process.layer_bbox, process.bin_raster_path, "../../output_data/validation" + file + ".tif")
+
 		logging.info("file {} done \n \n".format(file))
-		signal.alarm(0)
 
 
 if __name__ == '__main__':
