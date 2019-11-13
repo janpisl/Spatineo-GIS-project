@@ -32,6 +32,9 @@ class InputData():
 	def get_capabilities_bbox(self):
 		return self.capabilities.get_layer_bbox(self.get_layer_name(), self.crs)
 
+	def get_service_type(self):
+		return self.capabilities._get_service()
+
 	def get_bboxes_as_geojson(self):
 		''' This method converts response file to geojson geometries. imageAnalysisResult is included to the geojson features.
 		returns: list of geojson elements

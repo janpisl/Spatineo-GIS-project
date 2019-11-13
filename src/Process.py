@@ -34,6 +34,7 @@ class Process():
 
 		self.layer_name = self.input_data.get_layer_name()
 		self.layer_bbox = self.input_data.get_capabilities_bbox()
+		self.service_type = self.input_data.get_service_type()
 
 		self.result = ResultData(self.input_data.crs, self.layer_bbox, '../../')
 		self.raster = self.result.create_empty_raster('tmp.tif')
@@ -71,4 +72,4 @@ if __name__ == '__main__':
 	process.run_algorithm()
 	
 	# validation of the result. 
-	validate(process.url, process.layer_name, process.input_data.crs.name, process.layer_bbox, process.bin_raster_path, "../../validation21764.tif")
+	validate(process.url, process.layer_name, process.input_data.crs.name, process.layer_bbox, process.bin_raster_path, "../../validation21764.tif", process.service_type)
