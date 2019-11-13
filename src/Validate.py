@@ -36,7 +36,7 @@ def validate(url, layer_name, srs, bbox, result_file, output_path, service_type)
 		# change bbox from a list into a string, remove spaces and brackets
 		bbox_str = ''.join(char for char in str(bbox) if char not in '[] ')
 
-		req_url = "WMS:" + "{}?service=wms&version=2.0.0&srsName={}&BBOX={}".format(url, srs, bbox_str)
+		req_url = "{}?service=wms&version=2.0.0&srsName={}&BBOX={}".format(url, srs, bbox_str)
 		response = requests.get(req_url)
 		img_WMS = Image.open(BytesIO(response.content))
 
