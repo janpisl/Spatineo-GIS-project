@@ -29,10 +29,10 @@ validation_file = /Users/juhohanninen/spatineo/validation.tif
 def validate(url, layer_name, srs, bbox, result_file, output_path, service_type):
 
 	#self.service_type = Capabilities._get_service()
+	logging.info("validation starts at {}".format(datetime.datetime.now()))
 	
 	if service_type == 'WMS': 
-		logging.info("validation starts at {}".format(datetime.datetime.now()))
-
+		
 		# change bbox from a list into a string, remove spaces and brackets
 		bbox_str = ''.join(char for char in str(bbox) if char not in '[] ')
 
@@ -49,11 +49,7 @@ def validate(url, layer_name, srs, bbox, result_file, output_path, service_type)
 
 
 
-
-
-
 	elif service_type == 'WFS':
-		logging.info("validation starts at {}".format(datetime.datetime.now()))
 
 		# Set the driver (optional)
 		wfs_drv = ogr.GetDriverByName('WFS')
@@ -87,8 +83,13 @@ def validate(url, layer_name, srs, bbox, result_file, output_path, service_type)
 		layer = wfs_ds.GetLayerByName(layer_name)
 		if not layer:
 			raise Exception("Couldn't find layer in service")
+	   
+		feature_count = layer.GetFeatureCount()
+		if feature_count > 100000:
+			   logging.warning("Validation for layer {} skipped. there was too many features: {}".format(layer.GetName(), layer.GetFeatureCount()))
+			   return -1
 
-		logging.info("Layer: {}, Features: {}".format(layer.GetName(), layer.GetFeatureCount()))
+		logging.info("Layer: {}, Features: {}".format(layer.GetName(), feature_count))
 
 		# iterate over features
 
