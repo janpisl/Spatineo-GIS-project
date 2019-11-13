@@ -66,7 +66,7 @@ class Capabilities():
 					break
 			
 			if not bbox:
-				for element in root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/'):
+				for element in root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/'):
 					if (element.tag == '{http://www.opengis.net/wms}Name') and (element.text != layer_name):
 						layer = False
 					# change layer to true if the request is found
