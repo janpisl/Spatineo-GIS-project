@@ -1,15 +1,3 @@
-'''- project task
-	- when you create an empty raster, how do you set its bbox (georeferencing); generally, learn how to use rasterio with coordinates as opposed to pixel indices 
-	- from json, get CRS, 
-	- from xml, get bbox of the layer
-	- how to set width and height? Depends on resolution; that is something we decide once for the entire project? For now, yes. Then:
-		- width, height = bbox(x, y)/resolution
-			- if we want res 1px = 2*2km and the bbox is 1000*1000km,
-				then its 1000/2 for both width and height
-		- but perhaps in the future, width and height could be fixed and resolution dynamic, because if the bbox is smaller, it is reasonable to operate with smaller pixels
-
-'''
-
 import pdb
 import configparser
 import argparse
@@ -52,7 +40,7 @@ class Process():
 
 	def run_algorithm(self):
 
-		a = Algorithm(self.raster, self.input_data, self.input_data.capabilities.service_type)
+		a = Algorithm(self.raster, self.input_data, self.service_type)
 
 		return a.solve(self.output_raster_path, self.bin_raster_path)
 
