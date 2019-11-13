@@ -12,7 +12,9 @@ from scipy import stats
 
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
-logging.basicConfig(level=logging.INFO)
+import datetime
+logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") + '.log', level=logging.INFO)
+
 
 #pdb.set_trace()
 
@@ -37,19 +39,19 @@ class Algorithm():
 		mode = stats.mode(raster, axis=None)[0][0]
 		logging.debug("raster average: ",np.average(raster))
 		
-		return np.average(raster)
+		return np.average(raster)*0.1
 
 	def solve(self, output_path, bin_output_path):
 		eval_raster = self.raster.read()
 		norm_raster = np.copy(eval_raster)
 		request_counter = 0
+		nd = self.raster.nodata
 		logging.info("Iterating through geojson objects...")
 		for feat in self.features['features']:
 			request_counter += 1
 			if request_counter % 1000 == 0:
 				logging.debug("Feature no. {}".format(request_counter))
 			ref_image, ref_transform = rasterio.mask.mask(self.raster, [feat['geometry']], crop=False)
-			nd = self.raster.nodata
 			mask = ref_image[0] != nd
 
 			# NOTE: The algorithm is changed to calculate negative results. The result is not yet adapted to use this.

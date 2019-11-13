@@ -8,7 +8,11 @@ import argparse
 
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
-logging.basicConfig(level=logging.INFO)
+import datetime
+logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") + '.log', level=logging.INFO)
+
+
+
 
 '''
 [validation]
@@ -21,6 +25,8 @@ validation_file = /Users/juhohanninen/spatineo/validation.tif
 '''
 
 def validate(url, layer_name, srs, bbox, result_file, output_path):
+	
+	logging.info("validation starts at {}".format(datetime.datetime.now()))
 
 	# Set the driver (optional)
 	wfs_drv = ogr.GetDriverByName('WFS')
@@ -37,12 +43,16 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 	gdal.SetConfigOption('OGR_WFS_PAGING_ALLOWED', 'YES')
 	gdal.SetConfigOption('OGR_WFS_PAGE_SIZE', '10000')
 
+	# Fix for SSL connection errors
+	gdal.SetConfigOption('GDAL_HTTP_UNSAFESSL', 'YES')
+
 	# Open the webservice
 	req_url = "{}?service=wfs&version=2.0.0&srsName={}&BBOX={}".format(url, srs, bbox_str)
 	wfs_ds = wfs_drv.Open('WFS:' + req_url)
 	if not wfs_ds:
-		raise Exception("Couldn't open connection to the server.")
-
+		logging.error("Couldn't open connection to the server.")
+		#raise Exception("Couldn't open connection to the server.")
+		return -1
 
 	shapes = []
 
@@ -59,11 +69,12 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 
 	feat = layer.GetNextFeature()
 	count = 0
+
 	while feat is not None:
 		count += 1
 		if count % 100 == 0:
 			logging.info("Feature: {}".format(count))
-		geom = feat.GetGeometryRef()
+		geom = feat.GetGeometryRef().GetLinearGeometry()
 		json_feat = geojson.loads(geom.ExportToJson())
 		shapes.append(json_feat)
 
@@ -94,7 +105,7 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 		output_path,
 		'w',
 		driver='GTiff',
-		nodata=5,
+		nodata=99,
 		height=result.height,
 		width=result.width,
 		count=1,
@@ -105,15 +116,21 @@ def validate(url, layer_name, srs, bbox, result_file, output_path):
 
 	output.write(comparison, 1)
 	output.close()
-	logging.info("Done")
 
-	#TODO: write to file instead of stdout; iterate through all np.unique
 	logging.info("Statistics:")
-	if len(np.unique(comparison, return_counts = True)[1]) > 2:
-		logging.warning("statistics are incomplete")
+	logging.info("This is the np.unique count: {}".format(np.unique(comparison, return_counts = True)[1]))
 
-	logging.info("correct: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][0]/np.size(comparison))))
-	logging.info("incorrect: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][1]/np.size(comparison))))
+	for i in range(len(np.unique(comparison, return_counts = True)[0])):
+		if np.unique(comparison, return_counts = True)[0][i] == 0:
+			logging.info("Correct: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][i]/np.size(comparison))))
+		elif np.unique(comparison, return_counts = True)[0][i] == 1:
+			logging.info("False positives: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][i]/np.size(comparison))))
+		# this is supposed to be -1 but since uint8 is 0 to 255 it underflows and makes it 255	
+		elif np.unique(comparison, return_counts = True)[0][i] == 255:
+			logging.info("False negatives: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][i]/np.size(comparison))))		
+		else:
+			raise Exception("Unexpected values in the validation raster: {}".format(np.unique(comparison, return_counts = True)[0]))
+
 
 	return 0
 
