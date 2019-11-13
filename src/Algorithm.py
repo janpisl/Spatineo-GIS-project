@@ -54,23 +54,16 @@ class Algorithm():
 			ref_image, ref_transform = rasterio.mask.mask(self.raster, [feat['geometry']], crop=False)
 			mask = ref_image[0] != nd
 
-			# NOTE: The algorithm is changed to calculate negative results. The result is not yet adapted to use this.
 			props = feat['properties']
 			if props['imageAnalysisResult'] == 1:
-				# eval_raster[0][mask] += 1
 				norm_raster[0][mask] += 1
 			elif (props['imageAnalysisResult'] == 0 or props['imageAnalysisResult'] == -1):
 				norm_raster[0][mask] += 1
 				eval_raster[0][mask] += 1
 			else:
-				#TODO: exclude responses with feat['imageTestResult'] == None
-				#this should be done earlier than here (no reason to iterate through them)
 				logging.warning("unexpected imageTestResult value: {}".format(props['imageAnalysisResult']))
 				logging.warning(feat)
-			
-			#if i == 1000:
-			#    ref_image_out = ref_image
-			#i = i + 1
+
 		eval_raster = np.divide(eval_raster, norm_raster, out=np.zeros_like(eval_raster), where=norm_raster != 0)
 		logging.info("there was {} requests".format(request_counter))
 		# Save the image into disk.     
@@ -94,7 +87,7 @@ class Algorithm():
 		threshold = self.compute_threshold(eval_raster)
 		logging.debug("threshold is: {}".format(threshold))
 		binary_raster = eval_raster < threshold
-		#pdb.set_trace()
+
 		# Save the image into disk.        
 		bin_output = rasterio.open(
 			bin_output_path,
