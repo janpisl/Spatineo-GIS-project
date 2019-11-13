@@ -30,7 +30,8 @@ class Capabilities():
 				bbox: bounding box (array) of the service
 		'''
 		# TODO: It must be able to do both WMS and WFS as well as work with different types of XML document setups.
-
+		import pdb
+		pdb.set_trace()
 		epsg_code = crs.get_epsg()
 
 		if self.service_type == 'WMS':
@@ -54,7 +55,7 @@ class Capabilities():
 					layer = True
 
 				# retrieve the bbox when the contraints are upheld
-				if element.tag == '{http://www.opengis.net/wms}BoundingBox' and (element.attrib['CRS'] == epsg_code or element.attrib['SRS'] == epsg_code) and layer:
+				if element.tag == '{http://www.opengis.net/wms}BoundingBox' and element.attrib['CRS'] == epsg_code and layer:
 					bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
 
 					# change from strings to float
@@ -74,7 +75,7 @@ class Capabilities():
 						layer = True
 
 					# retrieve the bbox when the contraints are upheld
-					if element.tag == '{http://www.opengis.net/wms}BoundingBox' and (element.attrib['CRS'] == epsg_code or element.attrib['SRS'] == epsg_code) and layer:
+					if element.tag == '{http://www.opengis.net/wms}BoundingBox' and element.attrib['CRS'] == epsg_code and layer:
 						bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
 
 						# change from strings to float

@@ -66,7 +66,6 @@ class ResultData():
 			self.output_dir + output_name,
 			'w', # Write mode
 			driver=driver,
-			# the no data value must be set because, the actual value doesnt matter AFAIK
 			nodata = -99,
 			height=height,
 			width=width,
