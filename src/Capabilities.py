@@ -41,6 +41,7 @@ class Capabilities():
 			# parsing the XML document to the the root (setup) of the document
 			root = self.tree.getroot()
 
+			# WMS version 1.1.1, 1.3.0
 			# searching the XML document for the tag with the correct request name
 			for element in root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/'):
 				# this is to ensure it doesn't search in other layers in case bbox is not found in the target layer
@@ -52,14 +53,38 @@ class Capabilities():
 					layer = True
 
 				# retrieve the bbox when the contraints are upheld
-				if element.tag == '{http://www.opengis.net/wms}BoundingBox' and element.attrib['CRS'] == epsg_code and layer:
+				if element.tag == '{http://www.opengis.net/wms}BoundingBox' and (element.attrib['CRS'] == epsg_code or element.attrib['SRS'] == epsg_code) and layer:
 					bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
 
 					# change from strings to float
 					for item in range(len(bbox)):
 						bbox[item] = float(bbox[item])
+
+
 					# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
 					break
+			
+			if not bbox:
+				for element in root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/'):
+					if (element.tag == '{http://www.opengis.net/wms}Name') and (element.text != layer_name):
+						layer = False
+					# change layer to true if the request is found
+					if element.text == layer_name:
+						layer = True
+
+					# retrieve the bbox when the contraints are upheld
+					if element.tag == '{http://www.opengis.net/wms}BoundingBox' and (element.attrib['CRS'] == epsg_code or element.attrib['SRS'] == epsg_code) and layer:
+						bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
+
+						# change from strings to float
+						for item in range(len(bbox)):
+						bbox[item] = float(bbox[item])
+
+					# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
+					break
+
+
+
 
 		elif self.service_type == 'WFS':
 
