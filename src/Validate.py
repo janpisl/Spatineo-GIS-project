@@ -30,7 +30,7 @@ def validate(url, layer_name, srs, bbox, result_file, output_path, service_type)
 
 	#self.service_type = Capabilities._get_service()
 	logging.info("validation starts at {}".format(datetime.datetime.now()))
-	
+
 	if service_type == 'WMS': 
 		
 		# change bbox from a list into a string, remove spaces and brackets
@@ -100,8 +100,12 @@ def validate(url, layer_name, srs, bbox, result_file, output_path, service_type)
 
 		while feat is not None:
 			count += 1
-			if count % 100 == 0:
-				logging.info("Feature: {}".format(count))
+			if feature_count > 5000:
+				if count % 1000 == 0:
+					logging.info("Feature: {}".format(count))				
+			else:
+				if count % 100 == 0:
+					logging.info("Feature: {}".format(count))
 			geom = feat.GetGeometryRef().GetLinearGeometry()
 			json_feat = geojson.loads(geom.ExportToJson())
 			shapes.append(json_feat)
