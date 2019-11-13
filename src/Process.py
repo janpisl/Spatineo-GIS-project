@@ -15,6 +15,7 @@ from ResultData import ResultData
 class Process():
 
 	def __init__(self, cfg):
+		#pdb.set_trace()
 		response_file_path = cfg.get('data', 'response_file')
 		capabilities_path = cfg.get('data', 'get_capabilities')
 		

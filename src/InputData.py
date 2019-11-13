@@ -18,7 +18,7 @@ class InputData():
 		self.layer_key = requests['layerKey']
 		self.responses = requests['results']
 		self.crs = Projection(self.layer_key['crs'])
-		self.capabilities = Capabilities(capabilities_path)
+		self.capabilities = Capabilities(capabilities_path, self.get_layer_name(), self.crs)
 
 	def get_crs_name(self):
 		return self.layer_key['crs']
@@ -30,7 +30,7 @@ class InputData():
 		return self.responses[0]['url'].split("?")[0]
 
 	def get_capabilities_bbox(self):
-		return self.capabilities.get_layer_bbox(self.get_layer_name(), self.crs)
+		return self.capabilities.bbox
 
 	def get_service_type(self):
 		return self.capabilities._get_service()
