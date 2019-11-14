@@ -148,7 +148,6 @@ def validate(url, layer_name, srs, bbox, result_file, output_path, service_type)
 
 		output.write(comparison, 1)
 		output.close()
-
 		logging.info("Statistics:")
 		logging.info("This is the np.unique count: {}".format(np.unique(comparison, return_counts = True)[1]))
 

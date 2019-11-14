@@ -15,9 +15,6 @@ import logging
 import datetime
 logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") + '.log', level=logging.INFO)
 
-
-#pdb.set_trace()
-
 class Algorithm():
 	def __init__(self, raster, input_data, service):
 		'''
@@ -64,7 +61,9 @@ class Algorithm():
 				logging.warning("unexpected imageTestResult value: {}".format(props['imageAnalysisResult']))
 				logging.warning(feat)
 
+
 		eval_raster = np.divide(eval_raster, norm_raster, out=np.zeros_like(eval_raster), where=norm_raster != 0)
+		zero_mask = eval_raster[0] == 0
 		logging.info("there was {} requests".format(request_counter))
 		# Save the image into disk.     
 		img_output = rasterio.open(
@@ -82,11 +81,12 @@ class Algorithm():
 		img_output.close()
 		logging.debug("norm average: ",np.average(norm_raster))
 
-		
+
 		#TODO: replace this with something sensible
 		threshold = self.compute_threshold(eval_raster)
 		logging.debug("threshold is: {}".format(threshold))
 		binary_raster = eval_raster < threshold
+		binary_raster[0][zero_mask] = False
 
 		# Save the image into disk.        
 		bin_output = rasterio.open(
@@ -128,11 +128,9 @@ class Algorithm():
 					neg_geom.AddGeometry(neg_tmp)
 				except:
 					logging.error('error')
-				# pdb.set_trace()
 				logging.debug("Feature no. {}".format(request_counter))
 			
 			geom = ogr.CreateGeometryFromJson(json.dumps(feat['geometry']))
-			# pdb.set_trace()
 			# shp = shape(feat['geometry'])
 			res = feat['properties']['imageAnalysisResult']
 			try:
@@ -163,7 +161,6 @@ class Algorithm():
 		neg = neg_geom.UnionCascaded()
 
 		# result = pos.Difference(neg)
-		# pdb.set_trace()
 		# neg_feat = Feature(geometry=neg, properties={})
 		
 		with open('../result_neg.geojson', 'w') as outfile:
