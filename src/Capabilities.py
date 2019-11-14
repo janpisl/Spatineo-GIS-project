@@ -18,13 +18,13 @@ class Capabilities():
 		if "wms" in root.tag.lower():
 			return 'WMS'
 
-		for element in root:
-				for child in element:
-					if "wms" in child.text.lower():
-						return 'WMS'
-
 		if "wfs" in root.tag.lower():
 			return 'WFS'
+
+		for element in root:
+			for child in element:
+				if "wms" in child.text.lower():
+					return 'WMS'
 
 		raise Exception("Couldn't retrieve service type from {}".format(root.tag))
 		
@@ -36,7 +36,7 @@ class Capabilities():
 				bbox: bounding box (array) of the service
 		'''
 		# TODO: It must be able to do both WMS and WFS as well as work with different types of XML document setups.
-		def get_ref_system(element):
+		def get_ref_system(element): # local function for getting reference system for getCapabilities file
 			try: 
 				ref_system = element.attrib['CRS']
 			except KeyError:
@@ -86,7 +86,27 @@ class Capabilities():
 						break
 				
 			
+			
+			
 			if not layer: 
+				elements = root.findall('Capability/Layer/Layer')
+				for element in elements:
+					if element.tag == 'BoundingBox' and element.tag == 'Name':
+						print(element.tag)
+
+						ref_system = get_ref_system(element)
+
+						if str(epsg_code) in ref_system:
+
+							bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
+
+							# change from strings to float
+							for item in range(len(bbox)):
+								bbox[item] = float(bbox[item])
+								
+							# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
+							break
+			else:
 				elements = root.findall('Capability/Layer/')
 				for element in elements:
 					if element.tag == 'BoundingBox' in element.tag:
@@ -103,6 +123,9 @@ class Capabilities():
 								
 							# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
 							break
+
+
+			
 			
 
 
@@ -114,7 +137,7 @@ class Capabilities():
 			layer = False
 
 			# parsing the XML document to the root (setup) of the document
-			root = self.tree.getrSoot()
+			root = self.tree.getroot()
 
 			#WFS ver. 2.x.x
 			for elem in root.findall('./{http://www.opengis.net/wfs/2.0}FeatureTypeList/{http://www.opengis.net/wfs/2.0}FeatureType'):
