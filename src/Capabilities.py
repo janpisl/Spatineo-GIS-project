@@ -45,7 +45,7 @@ class Capabilities():
 				except KeyError:
 					raise Exception("CRS not found in {}".format(element.attrib))
 			return ref_system
-
+		
 		epsg_code = crs.get_epsg()
 
 		if self.service_type == 'WMS':
@@ -89,9 +89,16 @@ class Capabilities():
 			
 			
 			if not layer: 
-				elements = root.findall('Capability/Layer/Layer')
+				elements = root.findall('Capability/Layer/Layer/Layer/')
+
 				for element in elements:
-					if element.tag == 'BoundingBox' and element.tag == 'Name':
+					if (element.tag == 'Name') and (element.text != layer_name):
+						layer = False
+						# change layer to true if the request is found
+					if element.text == layer_name:
+						layer = True
+					
+					if element.tag == 'BoundingBox' and layer:
 						print(element.tag)
 
 						ref_system = get_ref_system(element)
@@ -106,27 +113,23 @@ class Capabilities():
 								
 							# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
 							break
-			else:
-				elements = root.findall('Capability/Layer/')
-				for element in elements:
-					if element.tag == 'BoundingBox' in element.tag:
 
-						ref_system = get_ref_system(element)
+				if bbox is None:			
+					elements = root.findall('Capability/Layer/')
+					for element in elements:
+						if element.tag == 'BoundingBox' in element.tag:
+							ref_system = get_ref_system(element)
 
-						if str(epsg_code) in ref_system:
+							if str(epsg_code) in ref_system:
 
-							bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
+								bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
 
-							# change from strings to float
-							for item in range(len(bbox)):
-								bbox[item] = float(bbox[item])
+								# change from strings to float
+								for item in range(len(bbox)):
+									bbox[item] = float(bbox[item])
 								
-							# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
-							break
-
-
-			
-			
+								# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
+								break
 
 
 		elif self.service_type == 'WFS':
