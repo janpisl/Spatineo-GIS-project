@@ -18,11 +18,16 @@ class Capabilities():
 		if "wms" in root.tag.lower():
 			return 'WMS'
 
+		for element in root:
+				for child in element:
+					if "wms" in child.text.lower():
+						return 'WMS'
+
 		if "wfs" in root.tag.lower():
 			return 'WFS'
 
 		raise Exception("Couldn't retrieve service type from {}".format(root.tag))
-
+		
 
 	def get_layer_bbox(self, layer_name, crs):
 		''' The fuction parses the GetCapabilities XML document in order to search for a 'global' bbox to use. 
@@ -48,8 +53,6 @@ class Capabilities():
 			# WMS version 1.1.1, 1.3.0
 			# searching the XML document for the tag with the correct request name
 			for element in elements:
-				# this is to ensure it doesn't search in other layers in case bbox is not found in the target layer
-				# it is not 100% so if there are any problems remove it
 				if (element.tag == '{http://www.opengis.net/wms}Name') and (element.text != layer_name):
 					layer = False
 				# change layer to true if the request is found
@@ -79,7 +82,41 @@ class Capabilities():
 						
 						# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
 						break
+				
 			
+			if not layer: 
+				elements = root.findall('Capability/Layer/')
+				print(elements)
+				for element in elements:
+					#print(element.text)
+					#print(element.attrib)
+					print(element.tag)
+					if 'BoundingBox' in element.text:
+						print(element.tag)
+						print(element.attrib)
+
+						try: 
+							ref_system = element.attrib['CRS']
+						except KeyError:
+							try:
+								ref_system = element.attrib['SRS']
+							except KeyError:
+								raise Exception("CRS not found in {}".format(element.attrib))
+						print(ref_system)
+
+						if str(epsg_code) in ref_system:
+
+							bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
+
+							# change from strings to float
+							for item in range(len(bbox)):
+								bbox[item] = float(bbox[item])
+								
+							# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
+							break
+			
+
+
 		elif self.service_type == 'WFS':
 
 			# init
