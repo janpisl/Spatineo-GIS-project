@@ -1,3 +1,6 @@
+import configparser
+import argparse
+
 import rasterio
 import rasterio.mask
 import json
@@ -77,7 +80,7 @@ class Algorithm():
 			count=1,
 			dtype = self.raster.dtypes[0],
 			crs=self.raster.crs,
-			transform=self.raster.transform,)   
+			transform=self.raster.transform)   
 		img_output.write(eval_raster)
 		img_output.close()
 		logging.debug("norm average: ",np.average(norm_raster))
@@ -100,7 +103,7 @@ class Algorithm():
 			count=1,
 			dtype = 'uint8',
 			crs=self.raster.crs,
-			transform=self.raster.transform,)   
+			transform=self.raster.transform)   
 		bin_output.write(binary_raster.astype(np.uint8))
 		bin_output.close()
 
@@ -185,13 +188,22 @@ class Algorithm():
 
 
 if __name__ == '__main__':
-
 	# This is an example how we can run the algorithm separately (without Process.py) if we need to.
+	parser = argparse.ArgumentParser()
+	parser.add_argument("path_to_config", help="Path to the file containing configuration.")
+	args = parser.parse_args()
+
+	config = configparser.ConfigParser()
+	data = config.read(args.path_to_config)
+	if len(data) == 0:
+		raise Exception("Configuration file not found.")
+
+	# temporary file - stays hard-coded 	
 	empty_raster = "../../tmp.tif"
-	responses_path = "/home/jan/Documents/Aalto/Spatineo_Project/spatineo-aalto/converted_example_service.txt"
+	responses_path = config.get('data','response_file')
 	with open(responses_path) as source:
 		requests = json.load(source)
 
 	#alg = Algorithm(empty_raster,requests, "WMS")
 	alg = Algorithm(empty_raster,requests, "WFS")
-	raster = alg.solve("../../ousdftput_tmp.tif")
+	raster = alg.solve(config.get('data','raster_output_path'), config.get('data','binary_raster_output_path'))
