@@ -57,11 +57,12 @@ class Capabilities():
 			# parsing the XML document to the the root (setup) of the document
 			root = self.tree.getroot()
 
-			elements = root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/') +root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/')
+			elements = root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/') +root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/') +root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/')
 
 			# WMS version 1.1.1, 1.3.0
 			# searching the XML document for the tag with the correct request name
 			for element in elements:
+				print(element.tag)
 				if (element.tag == '{http://www.opengis.net/wms}Name') and (element.text != layer_name):
 					layer = False
 				# change layer to true if the request is found
@@ -90,7 +91,6 @@ class Capabilities():
 			
 			if not layer: 
 				elements = root.findall('Capability/Layer/Layer/Layer/')
-
 				for element in elements:
 					if (element.tag == 'Name') and (element.text != layer_name):
 						layer = False
@@ -113,7 +113,7 @@ class Capabilities():
 								
 							# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
 							break
-
+							
 				if bbox is None:			
 					elements = root.findall('Capability/Layer/')
 					for element in elements:
