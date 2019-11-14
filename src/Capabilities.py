@@ -86,14 +86,8 @@ class Capabilities():
 			
 			if not layer: 
 				elements = root.findall('Capability/Layer/')
-				print(elements)
 				for element in elements:
-					#print(element.text)
-					#print(element.attrib)
-					print(element.tag)
-					if 'BoundingBox' in element.text:
-						print(element.tag)
-						print(element.attrib)
+					if element.tag == 'BoundingBox' in element.tag:
 
 						try: 
 							ref_system = element.attrib['CRS']
@@ -102,7 +96,6 @@ class Capabilities():
 								ref_system = element.attrib['SRS']
 							except KeyError:
 								raise Exception("CRS not found in {}".format(element.attrib))
-						print(ref_system)
 
 						if str(epsg_code) in ref_system:
 
