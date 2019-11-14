@@ -36,6 +36,15 @@ class Capabilities():
 				bbox: bounding box (array) of the service
 		'''
 		# TODO: It must be able to do both WMS and WFS as well as work with different types of XML document setups.
+		def get_ref_system(element):
+			try: 
+				ref_system = element.attrib['CRS']
+			except KeyError:
+				try:
+					ref_system = element.attrib['SRS']
+				except KeyError:
+					raise Exception("CRS not found in {}".format(element.attrib))
+			return ref_system
 
 		epsg_code = crs.get_epsg()
 
@@ -62,15 +71,8 @@ class Capabilities():
 
 				# retrieve the bbox when the contraints are upheld
 				if element.tag == '{http://www.opengis.net/wms}BoundingBox' and layer:
-
-					try: 
-						ref_system = element.attrib['CRS']
-					except KeyError:
-						try:
-							ref_system = element.attrib['SRS']
-						except KeyError:
-							raise Exception("CRS not found in {}".format(element.attrib))
-
+					
+					ref_system = get_ref_system(element)
 
 					if str(epsg_code) in ref_system:
 
@@ -89,13 +91,7 @@ class Capabilities():
 				for element in elements:
 					if element.tag == 'BoundingBox' in element.tag:
 
-						try: 
-							ref_system = element.attrib['CRS']
-						except KeyError:
-							try:
-								ref_system = element.attrib['SRS']
-							except KeyError:
-								raise Exception("CRS not found in {}".format(element.attrib))
+						ref_system = get_ref_system(element)
 
 						if str(epsg_code) in ref_system:
 
@@ -118,7 +114,7 @@ class Capabilities():
 			layer = False
 
 			# parsing the XML document to the root (setup) of the document
-			root = self.tree.getroot()
+			root = self.tree.getrSoot()
 
 			#WFS ver. 2.x.x
 			for elem in root.findall('./{http://www.opengis.net/wfs/2.0}FeatureTypeList/{http://www.opengis.net/wfs/2.0}FeatureType'):
