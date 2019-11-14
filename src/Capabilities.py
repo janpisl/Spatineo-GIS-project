@@ -21,8 +21,13 @@ class Capabilities():
 		if "wfs" in root.tag.lower():
 			return 'WFS'
 
-		raise Exception("Couldn't retrieve service type from {}".format(root.tag))
+		for element in root:
+			for child in element:
+				if "wms" in child.text.lower():
+					return 'WMS'
 
+		raise Exception("Couldn't retrieve service type from {}".format(root.tag))
+		
 
 	def get_layer_bbox(self, layer_name, crs):
 		''' The fuction parses the GetCapabilities XML document in order to search for a 'global' bbox to use. 
@@ -31,7 +36,16 @@ class Capabilities():
 				bbox: bounding box (array) of the service
 		'''
 		# TODO: It must be able to do both WMS and WFS as well as work with different types of XML document setups.
-
+		def get_ref_system(element): # local function for getting reference system for getCapabilities file
+			try: 
+				ref_system = element.attrib['CRS']
+			except KeyError:
+				try:
+					ref_system = element.attrib['SRS']
+				except KeyError:
+					raise Exception("CRS not found in {}".format(element.attrib))
+			return ref_system
+		
 		epsg_code = crs.get_epsg()
 
 		if self.service_type == 'WMS':
@@ -48,8 +62,6 @@ class Capabilities():
 			# WMS version 1.1.1, 1.3.0
 			# searching the XML document for the tag with the correct request name
 			for element in elements:
-				# this is to ensure it doesn't search in other layers in case bbox is not found in the target layer
-				# it is not 100% so if there are any problems remove it
 				if (element.tag == '{http://www.opengis.net/wms}Name') and (element.text != layer_name):
 					layer = False
 				# change layer to true if the request is found
@@ -59,15 +71,8 @@ class Capabilities():
 
 				# retrieve the bbox when the contraints are upheld
 				if element.tag == '{http://www.opengis.net/wms}BoundingBox' and layer:
-
-					try: 
-						ref_system = element.attrib['CRS']
-					except KeyError:
-						try:
-							ref_system = element.attrib['SRS']
-						except KeyError:
-							raise Exception("CRS not found in {}".format(element.attrib))
-
+					
+					ref_system = get_ref_system(element)
 
 					if str(epsg_code) in ref_system:
 
@@ -79,7 +84,54 @@ class Capabilities():
 						
 						# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
 						break
+				
 			
+			
+			
+			if not layer: 
+				elements = root.findall('Capability/Layer/Layer/Layer/')
+
+				for element in elements:
+					if (element.tag == 'Name') and (element.text != layer_name):
+						layer = False
+						# change layer to true if the request is found
+					if element.text == layer_name:
+						layer = True
+					
+					if element.tag == 'BoundingBox' and layer:
+						print(element.tag)
+
+						ref_system = get_ref_system(element)
+
+						if str(epsg_code) in ref_system:
+
+							bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
+
+							# change from strings to float
+							for item in range(len(bbox)):
+								bbox[item] = float(bbox[item])
+								
+							# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
+							break
+
+				if bbox is None:			
+					elements = root.findall('Capability/Layer/')
+					for element in elements:
+						if element.tag == 'BoundingBox' in element.tag:
+							ref_system = get_ref_system(element)
+
+							if str(epsg_code) in ref_system:
+
+								bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
+
+								# change from strings to float
+								for item in range(len(bbox)):
+									bbox[item] = float(bbox[item])
+								
+								# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
+								break
+
+
 		elif self.service_type == 'WFS':
 
 			# init

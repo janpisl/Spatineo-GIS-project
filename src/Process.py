@@ -27,16 +27,12 @@ class Process():
 		self.result = ResultData(self.input_data.crs, self.layer_bbox, '../../')
 		self.raster = self.result.create_empty_raster('tmp.tif')
 
-		# not tested, there might be some problems
 		self.url = self.input_data.get_request_url()
-		try: 
-			self.output_raster_path = cfg.get('data', 'raster_output_path')
-		except:
-			self.output_raster_path = '../../out.tif'
-		try:
-			self.bin_raster_path = cfg.get('data', 'binary_raster_output_path')
-		except:
-			self.bin_raster_path = '../../bin_out.tif'
+
+		self.output_raster_path = cfg.get('data', 'raster_output_path')
+		self.bin_raster_path = cfg.get('data', 'binary_raster_output_path')
+		self.val_raster_output_path = cfg.get('data', 'validation_raster_output_path')
+
 
 	def run_algorithm(self):
 
@@ -55,9 +51,10 @@ if __name__ == '__main__':
 	data = config.read(args.path_to_config)
 	if len(data) == 0:
 		raise Exception("Configuration file not found.")
+
 	process = Process(config)
 
 	process.run_algorithm()
 	
 	# validation of the result. 
-	validate(process.url, process.layer_name, process.input_data.crs.name, process.layer_bbox, process.bin_raster_path, "../../validation21764.tif", process.service_type)
+	validate(process.url, process.layer_name, process.input_data.crs.name, process.layer_bbox, process.bin_raster_path, process.val_raster_output_path, process.service_type)
