@@ -1,5 +1,5 @@
 from pyproj import CRS, Transformer
-
+import pyproj
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
 import datetime
@@ -8,7 +8,13 @@ logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S
 class Projection():
 	def __init__(self, name, manual_first_axis_direction=None):
 		self.name = name
-		self.crs = CRS(name)
+		
+		try:
+			self.crs = CRS(name)
+		except pyproj.exceptions.CRSError:
+			if name == "CRS:84":
+				self.crs = CRS("EPSG:4326")
+
 		self.manual_first_axis_direction = manual_first_axis_direction
 		self.from_wgs84_transformer = Transformer.from_crs("EPSG:4326", self.crs)
 		self.to_web_mercator_transformer = Transformer.from_crs(self.crs, 3857)

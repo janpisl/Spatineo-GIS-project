@@ -207,5 +207,4 @@ class Capabilities():
 		if not bbox:
 			raise Exception("Bounding box information not found for the layer.")
 
-		print("bbox: {}".format(bbox))
 		return bbox
