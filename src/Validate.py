@@ -37,14 +37,23 @@ def validate(url, layer_name, srs, bbox, result_file, output_path, service_type)
 		bbox_str = ''.join(char for char in str(bbox) if char not in '[] ')
 
 		req_url = "{}?service=wms&version=2.0.0&srsName={}&BBOX={}".format(url, srs, bbox_str)
+		print(req_url)
 		response = requests.get(req_url)
-		img_WMS = Image.open(BytesIO(response.content))
+		try:	
+			img = np.array(Image.open(StringIO(response.content)))
+		except:
+			raise Exception('img_WMS could not be retrieved with current url: {}'.format(req_url))
+
+		img_width, img_height, _ = img.shape
 
 		size_r = 3
 		size_c = 3
 
 
-				
+		for i in range(0, img_height - img.size/3, img.size/3):
+			for j in range(0, img_width - img.size/3, img.size/3):
+				box 
+
 
 
 
@@ -71,6 +80,7 @@ def validate(url, layer_name, srs, bbox, result_file, output_path, service_type)
 
 		# Open the webservice
 		req_url = "{}?service=wfs&version=2.0.0&srsName={}&BBOX={}".format(url, srs, bbox_str)
+		print(req_url)
 		wfs_ds = wfs_drv.Open('WFS:' + req_url)
 		if not wfs_ds:
 			logging.error("Couldn't open connection to the server.")
