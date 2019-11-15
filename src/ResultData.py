@@ -1,6 +1,8 @@
 import rasterio
 import numpy as np
 from math import floor, ceil
+from osgeo import gdal, ogr
+import sys
 
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
@@ -81,3 +83,20 @@ class ResultData():
 
 		return self.output_dir + output_name
 		
+
+	def convert_to_gpkg(self, input_file):
+
+		source = gdal.Open(input_file)
+
+		if source is None:
+			logging.error("Unable to open source file")
+			return
+
+		srcband = source.GetRasterBand(1)
+		dst_layername = input_file.split('/')[-1].split('.')[0]
+		
+		drv = ogr.GetDriverByName("GPKG")
+		dst_ds = drv.CreateDataSource( self.output_dir + dst_layername + ".gpkg" )
+		dst_layer = dst_ds.CreateLayer(dst_layername, srs = None )
+
+		gdal.Polygonize( srcband, None, dst_layer, -1, [], callback=None )

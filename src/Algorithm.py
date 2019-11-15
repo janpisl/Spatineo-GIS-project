@@ -19,7 +19,7 @@ import datetime
 logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") + '.log', level=logging.INFO)
 
 class Algorithm():
-	def __init__(self, raster, input_data, service):
+	def __init__(self, raster, input_data, service, result):
 		'''
 		args:
 			raster = empty raster
@@ -29,6 +29,7 @@ class Algorithm():
 		self.raster = rasterio.open(raster)
 		self.service = service
 		self.features = input_data.get_bboxes_as_geojson()
+		self.result = result
 		
 
 	def compute_threshold(self, raster):
@@ -106,6 +107,8 @@ class Algorithm():
 			transform=self.raster.transform)   
 		bin_output.write(binary_raster.astype(np.uint8))
 		bin_output.close()
+
+		self.result.convert_to_gpkg(bin_output_path) # TODO: combine all result datasets to use this class
 
 
 	def solve_simple(self, output_path, bin_output_path):
