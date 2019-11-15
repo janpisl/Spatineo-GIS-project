@@ -16,9 +16,7 @@ def run_batch(cfg):
 
 	directory = cfg.get('data', 'response_file')
 	get_capabilities_docs = cfg.get('data', 'get_capabilities')
-	raster_output_path = cfg.get('data', 'raster_output_path')
-	binary_raster_output_path = cfg.get('data', 'binary_raster_output_path')
-	validation_raster_output_path = cfg.get('data', 'validation_raster_output_path')
+	output_dir = cfg.get('data', 'output_dir')
 
 
 	for file_path in glob.glob(directory + '*.json'):
@@ -30,9 +28,9 @@ def run_batch(cfg):
 
 		config.set('data', 'response_file', file_path)
 		config.set('data', 'get_capabilities', get_capabilities_docs + file.split("_")[0] + ".xml")
-		config.set('data', 'raster_output_path', raster_output_path + file + ".tif")
-		config.set('data', 'binary_raster_output_path', binary_raster_output_path + "bin_" + file + ".tif")
-		config.set('data', 'validation_raster_output_path', validation_raster_output_path + "val_" + file + ".tif")
+		config.set('data', 'raster_output_path', output_dir + file + ".tif")
+		config.set('data', 'binary_raster_output_path', output_dir + "bin_" + file + ".tif")
+		config.set('data', 'validation_raster_output_path', output_dir + "val_" + file + ".tif")
 
 		process = Process(config)
 		process.run_algorithm()

@@ -29,10 +29,16 @@ class Process():
 
 		self.url = self.input_data.get_request_url()
 
-		self.output_raster_path = cfg.get('data', 'raster_output_path')
-		self.bin_raster_path = cfg.get('data', 'binary_raster_output_path')
-		self.val_raster_output_path = cfg.get('data', 'validation_raster_output_path')
 
+		try:
+			self.output_raster_path = cfg.get('data', 'raster_output_path')
+			self.bin_raster_path = cfg.get('data', 'binary_raster_output_path')
+			self.val_raster_output_path = cfg.get('data', 'validation_raster_output_path')
+		except:
+			output_dir = cfg.get('data', 'output_dir')
+			self.output_raster_path = output_dir + "result.tif"
+			self.bin_raster_path = output_dir + "binary.tif"
+			self.val_raster_output_path = output_dir + "validation.tif"
 
 	def run_algorithm(self):
 
