@@ -70,6 +70,7 @@ class Capabilities():
 		epsg_code = crs.get_epsg()
 
 		if self.service_type == 'WMS':
+			layer = False
 			# WMS solution
 
 			# parsing the XML document to the the root (setup) of the document
@@ -78,7 +79,6 @@ class Capabilities():
 			elements = root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/') +root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/') +root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/')
 
 			# WMS version 1.1.1, 1.3.0
-			# searching the XML document for the tag with the correct request name
 			for element in elements:
 				layer = get_layer(element, layer_name)
 
@@ -96,28 +96,24 @@ class Capabilities():
 						break
 			
 			
-			
-			if not layer: 
-				elements = root.findall('Capability/Layer/Layer/Layer/')
+			if not layer or bbox is None: 
+				elements = root.findall('Capability/Layer/Layer/Layer/') + root.findall('Capability/Layer/') + root.findall('Capability/Layer/Layer/')
 				for element in elements:
 					layer = get_layer(element, layer_name)
 					
 					if element.tag == 'BoundingBox' and layer:
-						print(element.tag)
 
 						ref_system = get_ref_system(element)
 						bbox = get_bbox(element, epsg_code, ref_system)
 						if bbox: 
 							break
+
+					if element.tag == 'BoundingBox':
+						ref_system = get_ref_system(element)
+						bbox = get_bbox(element, epsg_code, ref_system)
+						if bbox: 
+							break
 							
-				if bbox is None:			
-					elements = root.findall('Capability/Layer/')
-					for element in elements:
-						if element.tag == 'BoundingBox' in element.tag:
-							ref_system = get_ref_system(element)
-							bbox = get_bbox(element, epsg_code, ref_system)
-							if bbox: 
-								break
 
 	
 		elif self.service_type == 'WFS':
