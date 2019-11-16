@@ -45,14 +45,32 @@ class Capabilities():
 				except KeyError:
 					raise Exception("CRS not found in {}".format(element.attrib))
 			return ref_system
+
+		def get_bbox(element, epsg_code, ref_system):
+			bbox = None
+			if str(epsg_code) in ref_system:
+
+				bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
+
+				# change from strings to float
+				for item in range(len(bbox)):
+					bbox[item] = float(bbox[item])
+			return bbox
+		
+		def get_layer(element, layer_name):
+			layer = False
+			if (element.tag == '{http://www.opengis.net/wms}Name') and (element.text != layer_name):
+				layer = False
+			# change layer to true if the request is found
+			if element.text == layer_name:
+				layer = True
+					
+			return layer
 		
 		epsg_code = crs.get_epsg()
 
 		if self.service_type == 'WMS':
 			# WMS solution
-			# init
-			bbox = None
-			layer = False
 
 			# parsing the XML document to the the root (setup) of the document
 			root = self.tree.getroot()
@@ -62,69 +80,34 @@ class Capabilities():
 			# WMS version 1.1.1, 1.3.0
 			# searching the XML document for the tag with the correct request name
 			for element in elements:
-				if (element.tag == '{http://www.opengis.net/wms}Name') and (element.text != layer_name):
-					layer = False
-				# change layer to true if the request is found
-				if element.text == layer_name:
-					layer = True
-
+				layer = get_layer(element, layer_name)
 
 				# retrieve the bbox when the contraints are upheld
 				if element.tag == '{http://www.opengis.net/wms}BoundingBox' and layer:
-					
 					ref_system = get_ref_system(element)
-
-					if str(epsg_code) in ref_system:
-
-						bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
-
-						# change from strings to float
-						for item in range(len(bbox)):
-							bbox[item] = float(bbox[item])
-						
-						# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
+					bbox = get_bbox(element, epsg_code, ref_system)
+					if bbox: 
 						break
 				
 				if element.tag == '{http://www.opengis.net/wms}BoundingBox':
 					ref_system = get_ref_system(element)
-
-					if str(epsg_code) in ref_system:
-
-						bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
-
-						# change from strings to float
-						for item in range(len(bbox)):
-							bbox[item] = float(bbox[item])
-						
-						# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
+					bbox = get_bbox(element, epsg_code, ref_system)
+					if bbox: 
 						break
-				
 			
 			
 			
 			if not layer: 
 				elements = root.findall('Capability/Layer/Layer/Layer/')
 				for element in elements:
-					if (element.tag == 'Name') and (element.text != layer_name):
-						layer = False
-						# change layer to true if the request is found
-					if element.text == layer_name:
-						layer = True
+					layer = get_layer(element, layer_name)
 					
 					if element.tag == 'BoundingBox' and layer:
 						print(element.tag)
 
 						ref_system = get_ref_system(element)
-
-						if str(epsg_code) in ref_system:
-
-							bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
-
-							# change from strings to float
-							for item in range(len(bbox)):
-								bbox[item] = float(bbox[item])
-								
-							# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
+						bbox = get_bbox(element, epsg_code, ref_system)
+						if bbox: 
 							break
 							
 				if bbox is None:			
@@ -132,16 +115,8 @@ class Capabilities():
 					for element in elements:
 						if element.tag == 'BoundingBox' in element.tag:
 							ref_system = get_ref_system(element)
-
-							if str(epsg_code) in ref_system:
-
-								bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
-
-								# change from strings to float
-								for item in range(len(bbox)):
-									bbox[item] = float(bbox[item])
-								
-								# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
+							bbox = get_bbox(element, epsg_code, ref_system)
+							if bbox: 
 								break
 
 	
