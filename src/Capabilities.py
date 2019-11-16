@@ -62,7 +62,6 @@ class Capabilities():
 			# WMS version 1.1.1, 1.3.0
 			# searching the XML document for the tag with the correct request name
 			for element in elements:
-				print(element.tag)
 				if (element.tag == '{http://www.opengis.net/wms}Name') and (element.text != layer_name):
 					layer = False
 				# change layer to true if the request is found
@@ -73,6 +72,20 @@ class Capabilities():
 				# retrieve the bbox when the contraints are upheld
 				if element.tag == '{http://www.opengis.net/wms}BoundingBox' and layer:
 					
+					ref_system = get_ref_system(element)
+
+					if str(epsg_code) in ref_system:
+
+						bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
+
+						# change from strings to float
+						for item in range(len(bbox)):
+							bbox[item] = float(bbox[item])
+						
+						# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
+						break
+				
+				if element.tag == '{http://www.opengis.net/wms}BoundingBox':
 					ref_system = get_ref_system(element)
 
 					if str(epsg_code) in ref_system:
@@ -131,7 +144,7 @@ class Capabilities():
 								# this is to stop the search when bbox is found. if not here, bbox values get overwritten by values from other layers
 								break
 
-
+	
 		elif self.service_type == 'WFS':
 
 			# init
@@ -206,5 +219,6 @@ class Capabilities():
 		# throw exception if the bbox is not found
 		if not bbox:
 			raise Exception("Bounding box information not found for the layer.")
-
+		
+		print("bbox: {}".format(bbox))
 		return bbox
