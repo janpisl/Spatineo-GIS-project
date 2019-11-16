@@ -35,7 +35,6 @@ class Capabilities():
 			returns:
 				bbox: bounding box (array) of the service
 		'''
-		# TODO: It must be able to do both WMS and WFS as well as work with different types of XML document setups.
 		def get_ref_system(element): # local function for getting reference system for getCapabilities file
 			try: 
 				ref_system = element.attrib['CRS']
@@ -61,7 +60,7 @@ class Capabilities():
 			layer = False
 			if (element.tag == '{http://www.opengis.net/wms}Name') and (element.text != layer_name):
 				layer = False
-			# change layer to true if the request is found
+			
 			if element.text == layer_name:
 				layer = True
 					
@@ -102,7 +101,6 @@ class Capabilities():
 					layer = get_layer(element, layer_name)
 					
 					if element.tag == 'BoundingBox' and layer:
-
 						ref_system = get_ref_system(element)
 						bbox = get_bbox(element, epsg_code, ref_system)
 						if bbox: 
@@ -113,8 +111,6 @@ class Capabilities():
 						bbox = get_bbox(element, epsg_code, ref_system)
 						if bbox: 
 							break
-							
-
 	
 		elif self.service_type == 'WFS':
 
