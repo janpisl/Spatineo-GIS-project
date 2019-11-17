@@ -3,7 +3,7 @@ import pyproj
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
 import datetime
-logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") + '.log', level=logging.INFO)
+logging.basicConfig(filename="../../output_data/logs/" + datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") + '.log', level=logging.INFO)
 
 class Projection():
 	def __init__(self, name, manual_first_axis_direction=None):

@@ -5,7 +5,7 @@ import argparse
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
 import datetime
-logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") + '.log', level=logging.INFO)
+logging.basicConfig(filename="../../output_data/logs/" + datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") + '.log', level=logging.INFO)
 
 from Algorithm import Algorithm
 from Validate import validate
@@ -24,8 +24,8 @@ class Process():
 		self.layer_bbox = self.input_data.get_capabilities_bbox()
 		self.service_type = self.input_data.get_service_type()
 
-		output_dir = cfg.get('data', 'output_dir')
-		self.result = ResultData(self.input_data.crs, self.layer_bbox, output_dir)
+		self.output_dir = cfg.get('data', 'output_dir')
+		self.result = ResultData(self.input_data.crs, self.layer_bbox, self.output_dir)
 		self.raster = self.result.create_empty_raster('tmp.tif')
 
 		self.url = self.input_data.get_request_url()
@@ -36,9 +36,9 @@ class Process():
 			self.bin_raster_path = cfg.get('data', 'binary_raster_output_path')
 			self.val_raster_output_path = cfg.get('data', 'validation_raster_output_path')
 		except:
-			self.output_raster_path = output_dir + "result.tif"
-			self.bin_raster_path = output_dir + "binary.tif"
-			self.val_raster_output_path = output_dir + "validation.tif"
+			self.output_raster_path = self.output_dir + "result.tif"
+			self.bin_raster_path = self.output_dir + "binary.tif"
+			self.val_raster_output_path = self.output_dir + "validation.tif"
 
 	def run_algorithm(self):
 

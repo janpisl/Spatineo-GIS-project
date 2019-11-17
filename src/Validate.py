@@ -1,4 +1,5 @@
 from osgeo import ogr, osr, gdal
+from owslib.wms import WebMapService
 import rasterio.features
 import geojson
 import numpy as np
@@ -6,15 +7,13 @@ import pdb
 import configparser
 import argparse
 import requests
-import urllib.request
 from PIL import Image
-from io import BytesIO
 # from Capabilities import Capabilities
 
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
 import datetime
-logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") + '.log', level=logging.INFO)
+logging.basicConfig(filename="../../output_data/logs/" + datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") + '.log', level=logging.INFO)
 
 
 '''
@@ -26,6 +25,34 @@ bbox = 303000,5993000,325000,6015000
 raster_to_validate = /Users/juhohanninen/spatineo/result_out44.tif
 validation_file = /Users/juhohanninen/spatineo/validation.tif
 '''
+#"url": "http://paikkatieto.ymparisto.fi/arcgis/services/INSPIRE/SYKE_Hydrografia/MapServer/WmsServer?VERSION=1.3.0&SERVICE=WMS&REQUEST=GetMap&LAYERS=HY.Network.WatercourseLink&STYLES=&CRS=EPSG:3067&BBOX=353484.39290249243,6952336.504877807,515662.8104318712,7114514.922407186&WIDTH=256&HEIGHT=256&FORMAT=image/png&EXCEPTIONS=XML"
+
+def validate_WMS(url, layer_name, srs, bbox, result_file, output_path):
+	
+	pass
+	#image = requests.get("http://paikkatieto.ymparisto.fi/arcgis/services/INSPIRE/SYKE_Hydrografia/MapServer/WmsServer?VERSION=1.3.0&SERVICE=WMS&REQUEST=GetMap&LAYERS=HY.Network.WatercourseLink&STYLES=&CRS=EPSG:3067&BBOX=353484.39290249243,6952336.504877807,515662.8104318712,7114514.922407186&WIDTH=256&HEIGHT=256&FORMAT=image/png&EXCEPTIONS=XML")
+
+
+'''
+
+from owslib.wms import WebMapService
+wms = WebMapService("http://paikkatieto.ymparisto.fi/arcgis/services/INSPIRE/SYKE_Hydrografia/MapServer/WmsServer", version='1.3.0')
+
+img = wms.getmap(layers=['HY.Network.WatercourseLink'],
+					styles=[],
+					srs='EPSG:3067',
+					bbox=(353484.39290249243,6952336.504877807,515662.8104318712,7114514.922407186),
+					size=(256, 256),
+					format='image/png',
+					transparent=False
+					)
+out = open('jpl_mosaic_visb.jpg', 'wb')
+out.write(img.read())
+out.close()
+
+'''
+
+
 
 def validate(url, layer_name, srs, bbox, result_file, output_path, service_type):
 
@@ -33,38 +60,12 @@ def validate(url, layer_name, srs, bbox, result_file, output_path, service_type)
 	logging.info("validation starts at {}".format(datetime.datetime.now()))
 
 	if service_type == 'WMS': 
-		box = None
-		
-		# change bbox from a list into a string, remove spaces and brackets
-		bbox_str = ''.join(char for char in str(bbox) if char not in '[] ')
 
-		req_url = "{}?service=wms&version=2.0.0&srsName={}&BBOX={}".format(url, srs, bbox_str)
-		print(req_url)
-		#response = requests.get(req_url)
-		try:	
-			im = Image.open(urllib.request.urlopen(req_url))
-		except:
-			raise Exception('img_WMS could not be retrieved with current url: {}'.format(req_url))
-		
-		img_r, img_c = im.size
-		img_copy = np.zeros(img_r, img_c)
-
-		size_r = 3
-		size_c = 3
-
-		extra_x = img_r % size_r
-		extra_y = img_c % size_c
-
-		for i in range(0, img_r- (img_r - extra_x), (img_r - extra_x)/3):
-			for j in range(0, img_c -(img_c - extra_y), (img_c - extra_y)/3):
-				box = im(i, j)
-				box_first = box[0][1]
-
-				if np.not_equal(box_first, box[i][j]):
-					img_copy[i][j] = True
+		validate_WMS(url, layer_name, srs, bbox, result_file, output_path)
 					
-
 	elif service_type == 'WFS':
+
+		#validate_WFS()
 
 		# Set the driver (optional)
 		wfs_drv = ogr.GetDriverByName('WFS')
@@ -116,11 +117,11 @@ def validate(url, layer_name, srs, bbox, result_file, output_path, service_type)
 		while feat is not None:
 			count += 1
 			if feature_count > 5000:
-				if count % 1000 == 0:
-					logging.info("Feature: {}".format(count))				
+				log_every = 1000				
 			else:
-				if count % 100 == 0:
-					logging.info("Feature: {}".format(count))
+				log_every = 100
+			if count % log_every == 0:
+				logging.info("Feature: {}".format(count))
 			geom = feat.GetGeometryRef().GetLinearGeometry()
 			json_feat = geojson.loads(geom.ExportToJson())
 			shapes.append(json_feat)
@@ -204,3 +205,6 @@ def validate(url, layer_name, srs, bbox, result_file, output_path, service_type)
 	
 	
 	
+
+
+
