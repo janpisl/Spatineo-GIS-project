@@ -14,20 +14,24 @@ class Capabilities():
 
 	def _get_service(self):
 		root = self.tree.getroot()
+		service = None
 
 		if "wms" in root.tag.lower():
-			return 'WMS'
+			service = 'WMS'
 
-		if "wfs" in root.tag.lower():
-			return 'WFS'
+		elif "wfs" in root.tag.lower():
+			service = 'WFS'
 
-		for element in root:
-			for child in element:
-				if "wms" in child.text.lower():
-					return 'WMS'
+		else:
+			for element in root:
+				for child in element:
+					if "wms" in child.text.lower():
+						return 'WMS'
 
-		raise Exception("Couldn't retrieve service type from {}".format(root.tag))
+		if service is None:
+			raise Exception("Couldn't retrieve service type from {}".format(root.tag))
 		
+		return service
 
 	def get_layer_bbox(self, layer_name, crs):
 		''' The fuction parses the GetCapabilities XML document in order to search for a 'global' bbox to use. 
@@ -187,5 +191,5 @@ class Capabilities():
 		if not bbox:
 			raise Exception("Bounding box information not found for the layer.")
 		
-		print("bbox: {}".format(bbox))
+		logging.debug("bbox: {}".format(bbox))
 		return bbox
