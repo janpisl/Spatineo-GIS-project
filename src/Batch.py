@@ -39,7 +39,9 @@ def run_batch(cfg):
 		process.run_algorithm()
 
 		# validation of the result. 
-		validate(process.url, process.layer_name, process.input_data.crs.name, process.layer_bbox, process.bin_raster_path, process.val_raster_output_path, process.service_type)
+		validate(process.url, process.layer_name, process.input_data.crs.name, 
+					process.layer_bbox, process.bin_raster_path, process.val_raster_output_path, 
+					process.service_type, process.service_version)
 
 		logging.info("file {} done \n \n".format(file))
 

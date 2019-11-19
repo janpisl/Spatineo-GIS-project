@@ -21,15 +21,15 @@ class Process():
 		self.input_data = InputData(response_file_path, capabilities_path)
 
 		self.layer_name = self.input_data.get_layer_name()
-		self.layer_bbox = self.input_data.get_capabilities_bbox()
+		self.layer_bbox = self.input_data.bbox
 		self.service_type = self.input_data.get_service_type()
 
 		self.output_dir = cfg.get('data', 'output_dir')
 		self.result = ResultData(self.input_data.crs, self.layer_bbox, self.output_dir)
 		self.raster = self.result.create_empty_raster('tmp.tif')
 
-		self.url = self.input_data.get_request_url()
-
+		self.url = self.input_data.request_url
+		self.service_version = self.input_data.service_version
 
 		try:
 			self.output_raster_path = cfg.get('data', 'raster_output_path')
@@ -63,4 +63,6 @@ if __name__ == '__main__':
 	process.run_algorithm()
 	
 	# validation of the result. 
-	validate(process.url, process.layer_name, process.input_data.crs.name, process.layer_bbox, process.bin_raster_path, process.val_raster_output_path, process.service_type)
+	validate(process.url, process.layer_name, process.input_data.crs.name, 
+				process.layer_bbox, process.bin_raster_path, process.val_raster_output_path, 
+				process.service_type, process.service_version)
