@@ -1,4 +1,6 @@
 import rasterio
+from rasterio.features import shapes
+import fiona
 import numpy as np
 from math import floor, ceil
 from osgeo import gdal, ogr
@@ -85,18 +87,21 @@ class ResultData():
 		
 
 	def convert_to_gpkg(self, input_file):
-
-		source = gdal.Open(input_file)
-
-		if source is None:
-			logging.error("Unable to open source file")
-			return
-
-		srcband = source.GetRasterBand(1)
+		# Create layer name based on the raster file name
 		dst_layername = input_file.split('/')[-1].split('.')[0]
 		
-		drv = ogr.GetDriverByName("GPKG")
-		dst_ds = drv.CreateDataSource( self.output_dir + dst_layername + ".gpkg" )
-		dst_layer = dst_ds.CreateLayer(dst_layername, srs = None )
+		with rasterio.open(input_file, driver= 'GTiff', mode='r') as src:
+			image = src.read(1)
+			
+			# Mask value is 1, which means data
+			mask = image == 1
 
-		gdal.Polygonize( srcband, None, dst_layer, -1, [], callback=None )
+			results = ({'geometry': s, 'properties': {}} for i, (s, v) in enumerate(shapes(image, mask=mask, transform=src.transform)))
+
+		with fiona.open(
+				self.output_dir + dst_layername + ".gpkg" , 'w', 
+				driver="GPKG",
+				crs=src.crs,
+				schema={'geometry': 'Polygon', 'properties': {}}) as dst:
+			dst.writerecords(results)
+	
