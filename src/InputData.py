@@ -18,19 +18,19 @@ class InputData():
 		self.layer_key = requests['layerKey']
 		self.responses = requests['results']
 		self.crs = Projection(self.layer_key['crs'])
+		self.request_url = self.responses[0]['url'].split("?")[0]
 		self.capabilities = Capabilities(capabilities_path, self.get_layer_name(), self.crs)
+		self.bbox = self.capabilities.bbox
+		try:
+			self.service_version = self.responses[0]['url'].split("VERSION=")[1].split("&")[0]
+		except:
+			self.service_version = None
 
 	def get_crs_name(self):
 		return self.layer_key['crs']
 
 	def get_layer_name(self):
 		return self.layer_key['layerName']
-		
-	def get_request_url(self):
-		return self.responses[0]['url'].split("?")[0]
-
-	def get_capabilities_bbox(self):
-		return self.capabilities.bbox
 
 	def get_service_type(self):
 		return self.capabilities._get_service()
@@ -40,12 +40,16 @@ class InputData():
 		returns: list of geojson elements
 		'''
 		features = []
-		extent = self.get_capabilities_bbox()
+		extent = self.bbox
 
 		invalid_request_count = 0
 		bbox_out_count = 0
 
 		count = 0
+
+		coords_min = [float('inf'),float('inf')]
+		coords_max = [float('-inf'),float('-inf')]
+
 		logging.info("Creating geojson objects.")
 		for res in self.responses:
 			count += 1
@@ -80,9 +84,18 @@ class InputData():
 				bbox_out_count += 1
 				continue
 
+			if bbox_out_count == 0:
+				for i in range(len(coords_min)):
+					if bbox[i] < coords_min[i]:
+						coords_min[i] = bbox[i]
+				for i in range(len(coords_max)):
+					if bbox[i] > coords_max[i]:
+						coords_max[i] = bbox[i]
+
+
 			# Create a closed Polygon following the edges of the bbox.
 			g = Polygon([[(bbox[0], bbox[1]), (bbox[0], bbox[3]), (bbox[2], bbox[3]), (bbox[2], bbox[1]), (bbox[0], bbox[1])]])
-			
+
 			# Save other data
 			props = {
 				'imageAnalysisResult': res['imageAnalysisResult'],
@@ -98,9 +111,10 @@ class InputData():
 
 		if bbox_out_count > 0:
 			logging.info("Filtered {} requests way because request bbox was not completely within layer bbox".format(bbox_out_count))
+		else:
+			self.bbox = coords_min + coords_max
+			logging.info("Bounding box set to the extent of all requests to {}".format(self.bbox))
 
 		feat_c = FeatureCollection(features)
 		
-		#with open('../data.geojson', 'w') as outfile:
-		#	json.dump(feat_c, outfile)
 		return feat_c
