@@ -18,6 +18,8 @@ class Process():
 		response_file_path = cfg.get('data', 'response_file')
 		capabilities_path = cfg.get('data', 'get_capabilities')
 		
+		file = response_file_path.split('/')[-1].split('.')[0]
+
 		self.input_data = InputData(response_file_path, capabilities_path)
 
 		self.layer_name = self.input_data.get_layer_name()
@@ -36,9 +38,9 @@ class Process():
 			self.bin_raster_path = cfg.get('data', 'binary_raster_output_path')
 			self.val_raster_output_path = cfg.get('data', 'validation_raster_output_path')
 		except:
-			self.output_raster_path = self.output_dir + "result.tif"
-			self.bin_raster_path = self.output_dir + "binary.tif"
-			self.val_raster_output_path = self.output_dir + "validation.tif"
+			self.output_raster_path = self.output_dir + file + ".tif"
+			self.bin_raster_path = self.output_dir + "bin_" + file + ".tif"
+			self.val_raster_output_path = self.output_dir + "val_" + file + ".tif"
 
 	def run_algorithm(self):
 
