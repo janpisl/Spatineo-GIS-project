@@ -65,11 +65,14 @@ def validate_WMS(url, layer_name, srs, bbox, result_array, output_path, service_
 
 	req_url = "{}?VERSION={}&SERVICE=WMS&REQUEST=GetMap&LAYERS={}&STYLES=&CRS={}&BBOX={}&WIDTH=256&HEIGHT=256&FORMAT=image/png&EXCEPTIONS=XML".format(url, service_version, layer_name, srs, bbox)
 	image = requests.get(req_url)
+	print(req_url)
+	#pdb.set_trace()
+
 	image = np.array(Image.open(io.BytesIO(image.content))) 
 
-	real_data = test_for_var(image)
+	real_data = test_for_var(image).astype("uint8")
 
-	our_grid = test_for_var(rasterio.open(result_array))
+	our_grid = test_for_var(result_array).astype("uint8")
 
 	return real_data, our_grid
 
