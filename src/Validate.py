@@ -42,7 +42,6 @@ def test_pixel(image):
 	return False
 
 def test_for_var(image):
-	pdb.set_trace()
 
 	data_grid = np.empty([3,3])
 	size = round(image.shape[0]/data_grid.shape[0])
@@ -63,14 +62,14 @@ def validate_WMS(url, layer_name, srs, bbox, result_array, output_path, service_
 	#TODO: set height & width to higher values so more features are rendered? what values does Spatineo use?? 
 	if service_version is None:
 		service_version = "1.3.0"
+
 	req_url = "{}?VERSION={}&SERVICE=WMS&REQUEST=GetMap&LAYERS={}&STYLES=&CRS={}&BBOX={}&WIDTH=256&HEIGHT=256&FORMAT=image/png&EXCEPTIONS=XML".format(url, service_version, layer_name, srs, bbox)
 	image = requests.get(req_url)
-
 	image = np.array(Image.open(io.BytesIO(image.content))) 
 
 	real_data = test_for_var(image)
 
-	our_grid = test_for_var(rasterio.open(result_array).read(1))
+	our_grid = test_for_var(rasterio.open(result_array))
 
 	return real_data, our_grid
 
