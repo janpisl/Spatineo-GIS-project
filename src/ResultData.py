@@ -1,7 +1,9 @@
 import rasterio
 from rasterio.features import shapes
 from shapely.geometry import shape, mapping
+from shapely.ops import transform as shapely_transform # TODO: check naming if it overlapping or not to variables of this file?
 import fiona
+import fiona.crs
 import numpy as np
 import scipy.ndimage
 from math import floor, ceil
@@ -101,17 +103,23 @@ class ResultData():
 			# Mask value is 1, which means data
 			mask = buffered == 1
 
-			# Tolerance for douglas peucker simplification
-			tol = self.resolution
+			# # Tolerance for douglas peucker simplification
+			# tol = self.resolution
 			
-			# Simplification and convertion from shapely shape to geojson-like object for fiona.
-			feats = (shape(s).simplify(tol) for (s,v) in shapes(buffered, mask=mask, transform=src.transform))
+			# Transformation and convertion from shapely shape to geojson-like object for fiona.
+			feats = []
+			for (s,v) in shapes(buffered, mask=mask, transform=src.transform):
+				shp = shape(s)
+				if self.crs.output_transform:
+					shp = shapely_transform(self.crs.output_transform, shp)
+				feats.append(shp)
+
 			results = ({'geometry': mapping(f), 'properties': {}} for f in feats)
 
 		with fiona.open(
 				self.output_dir + dst_layername + ".gpkg" , 'w', 
 				driver="GPKG",
-				crs=src.crs,
+				crs=fiona.crs.from_epsg(self.crs.output_crs.to_epsg()) if self.crs.output_crs else src.crs,
 				schema={'geometry': 'Polygon', 'properties': {}}) as dst:
 			dst.writerecords(results)
 	

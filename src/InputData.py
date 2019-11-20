@@ -17,7 +17,7 @@ class InputData():
 			requests = json.load(source)
 		self.layer_key = requests['layerKey']
 		self.responses = requests['results']
-		self.crs = Projection(self.layer_key['crs'])
+		self.crs = Projection(self.layer_key['crs'], "EPSG:4326") # TODO: Move output crs to config
 		self.request_url = self.responses[0]['url'].split("?")[0]
 		self.capabilities = Capabilities(capabilities_path, self.get_layer_name(), self.crs)
 		self.bbox = self.capabilities.bbox

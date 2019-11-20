@@ -6,7 +6,7 @@ import datetime
 logging.basicConfig(filename="../../output_data/logs/" + datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") + '.log', level=logging.INFO)
 
 class Projection():
-	def __init__(self, name, manual_first_axis_direction=None):
+	def __init__(self, name, output_crs_name=None, manual_first_axis_direction=None):
 		self.name = name
 		
 		try:
@@ -17,7 +17,13 @@ class Projection():
 
 		self.manual_first_axis_direction = manual_first_axis_direction
 		self.from_wgs84_transformer = Transformer.from_crs("EPSG:4326", self.crs)
-		self.to_web_mercator_transformer = Transformer.from_crs(self.crs, 3857)
+
+		if output_crs_name:
+			self.output_crs = CRS(output_crs_name)
+			self.output_transform = Transformer.from_crs(self.crs, self.output_crs).transform
+		else:
+			self.output_crs = None
+			self.output_transform = None
 
 	def is_projected(self):
 		return self.crs.is_projected
@@ -30,9 +36,6 @@ class Projection():
 
 	def convert_from_wgs84(self, lon, lat):
 		return self.from_wgs84_transformer.transform(lat, lon)
-
-	def convert_to_web_mercator(self, x, y):
-		return self.to_web_mercator_transformer.transform(x, y)
 
 	def is_first_axis_east(self):
 		dir = self.manual_first_axis_direction if self.manual_first_axis_direction else self.crs.axis_info[0].direction.lower()
