@@ -1,10 +1,12 @@
 import rasterio
 from rasterio.features import shapes
+from shapely.geometry import shape, mapping
 import fiona
 import numpy as np
+import scipy.ndimage
 from math import floor, ceil
-from osgeo import gdal, ogr
-import sys
+# from osgeo import gdal, ogr
+# import sys
 
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
@@ -93,10 +95,18 @@ class ResultData():
 		with rasterio.open(input_file, driver= 'GTiff', mode='r') as src:
 			image = src.read(1)
 			
-			# Mask value is 1, which means data
-			mask = image == 1
+			# Create 1 pixel buffer around areas to smooth output.
+			buffered = scipy.ndimage.maximum_filter(image, (3,3))
 
-			results = ({'geometry': s, 'properties': {}} for i, (s, v) in enumerate(shapes(image, mask=mask, transform=src.transform)))
+			# Mask value is 1, which means data
+			mask = buffered == 1
+
+			# Tolerance for douglas peucker simplification
+			tol = self.resolution
+			
+			# Simplification and convertion from shapely shape to geojson-like object for fiona.
+			feats = (shape(s).simplify(tol) for (s,v) in shapes(buffered, mask=mask, transform=src.transform))
+			results = ({'geometry': mapping(f), 'properties': {}} for f in feats)
 
 		with fiona.open(
 				self.output_dir + dst_layername + ".gpkg" , 'w', 
