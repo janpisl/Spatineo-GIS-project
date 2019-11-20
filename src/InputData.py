@@ -111,9 +111,10 @@ class InputData():
 
 		if bbox_out_count > 0:
 			logging.info("Filtered {} requests way because request bbox was not completely within layer bbox".format(bbox_out_count))
-		else:
+		#TODO: this needs to be a square; now it isn't
+		'''else:
 			self.bbox = coords_min + coords_max
-			logging.info("Bounding box set to the extent of all requests to {}".format(self.bbox))
+			logging.info("Bounding box set to the extent of all requests to {}".format(self.bbox))'''
 
 		feat_c = FeatureCollection(features)
 		
