@@ -89,8 +89,8 @@ class InputData():
 					if bbox[i] < coords_min[i]:
 						coords_min[i] = bbox[i]
 				for i in range(len(coords_max)):
-					if bbox[i] > coords_max[i]:
-						coords_max[i] = bbox[i]
+					if bbox[i + len(coords_max)] > coords_max[i]:
+						coords_max[i] = bbox[i  + len(coords_max)]
 
 
 			# Create a closed Polygon following the edges of the bbox.
