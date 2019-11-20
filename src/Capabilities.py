@@ -27,18 +27,21 @@ class Capabilities():
 				for child in element:
 					if "wms" in child.text.lower():
 						return 'WMS'
+					elif "wfs" in child.text.lower():
+						return "WFS"
 
 		if service is None:
 			raise Exception("Couldn't retrieve service type from {}".format(root.tag))
 		
 		return service
 
-	def get_layer_bbox(self, layer_name, crs):
-		''' The fuction parses the GetCapabilities XML document in order to search for a 'global' bbox to use. 
-			It retrieves the bbox from the GetCapabilties document by finding the tag of the current request where it finds the bbox with correct CRS. 
-			returns:
-				bbox: bounding box (array) of the service
-		'''
+
+
+	def get_layer_bbox_wms(self, layer_name, crs):
+
+		bbox = None
+		epsg_code = crs.get_epsg()
+
 		def get_ref_system(element): # local function for getting reference system for getCapabilities file
 			try: 
 				ref_system = element.attrib['CRS']
@@ -49,73 +52,53 @@ class Capabilities():
 					raise Exception("CRS not found in {}".format(element.attrib))
 			return ref_system
 
-		def get_bbox(element, epsg_code, ref_system):
-			bbox = None
-			if str(epsg_code) in ref_system:
 
-				bbox = [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]
+		def transform(bbox, transform_from, transform_to):
+			tr = Transformer.from_crs(transform_from, "EPSG:" + transform_to)
+			return tr.transform(bbox[0], bbox[1]) + tr.transform(bbox[2], bbox[3])
 
-				# change from strings to float
-				for item in range(len(bbox)):
-					bbox[item] = float(bbox[item])
-			return bbox
-		
-		def get_layer(element, layer_name):
-			layer = False
-			if (element.tag == '{http://www.opengis.net/wms}Name') and (element.text != layer_name):
-				layer = False
+
+		def search(elements, layer_name, epsg_code, crs_flag=False):
 			
-			if element.text == layer_name:
+			bbox = None
+			if layer_name  == "not_required":
 				layer = True
-					
-			return layer
-		
-		epsg_code = crs.get_epsg()
+			else:
+				layer = False
+
+			for element in elements:
+				if layer is False:
+					layer = element.text == layer_name
+
+				if (element.tag == '{http://www.opengis.net/wms}BoundingBox' or element.tag == 'BoundingBox') and layer:
+					if (str(epsg_code) in get_ref_system(element)) or crs_flag is True:
+						bbox = [float(i) for i in [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]]
+						if crs_flag is True:
+							bbox = transform(bbox_to_tranform, get_ref_system(element), epsg_code)
+						break
+			return bbox
+			
+
+		root = self.tree.getroot()
+
+		elements = root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/') + root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/') + root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/') + root.findall('Capability/Layer/Layer/Layer/') + root.findall('Capability/Layer/') + root.findall('Capability/Layer/Layer/')
+
+		bbox = search(elements, layer_name=layer_name, epsg_code=epsg_code)
+		if bbox is None:
+			bbox = search(elements, layer_name=layer_name, epsg_code=epsg_code, crs_flag = True)
+			if bbox is None:
+				bbox = search(elements, layer_name="not_required", epsg_code=epsg_code)
+				if bbox is None:
+					bbox = search(elements, layer_name="not_required", epsg_code=epsg_code, crs_flag = True)
+
+		return bbox
+
+	def get_layer_bbox(self, layer_name, crs):
 
 		if self.service_type == 'WMS':
-			layer = False
-			# WMS solution
-
-			# parsing the XML document to the the root (setup) of the document
-			root = self.tree.getroot()
-
-			elements = root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/') +root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/{http://www.opengis.net/wms}Layer/') +root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}Layer/')
-
-			# WMS version 1.1.1, 1.3.0
-			for element in elements:
-				layer = get_layer(element, layer_name)
-
-				# retrieve the bbox when the contraints are upheld
-				if element.tag == '{http://www.opengis.net/wms}BoundingBox' and layer:
-					ref_system = get_ref_system(element)
-					bbox = get_bbox(element, epsg_code, ref_system)
-					if bbox: 
-						break
-				
-				if element.tag == '{http://www.opengis.net/wms}BoundingBox':
-					ref_system = get_ref_system(element)
-					bbox = get_bbox(element, epsg_code, ref_system)
-					if bbox: 
-						break
 			
-			
-			if not layer or bbox is None: 
-				elements = root.findall('Capability/Layer/Layer/Layer/') + root.findall('Capability/Layer/') + root.findall('Capability/Layer/Layer/')
-				for element in elements:
-					layer = get_layer(element, layer_name)
-					
-					if element.tag == 'BoundingBox' and layer:
-						ref_system = get_ref_system(element)
-						bbox = get_bbox(element, epsg_code, ref_system)
-						if bbox: 
-							break
+			bbox = self.get_layer_bbox_wms(layer_name, crs)
 
-					if element.tag == 'BoundingBox':
-						ref_system = get_ref_system(element)
-						bbox = get_bbox(element, epsg_code, ref_system)
-						if bbox: 
-							break
-	
 		elif self.service_type == 'WFS':
 
 			# init
@@ -191,5 +174,11 @@ class Capabilities():
 		if not bbox:
 			raise Exception("Bounding box information not found for the layer.")
 		
-		logging.debug("bbox: {}".format(bbox))
+		logging.info("bbox: {}".format(bbox))
 		return bbox
+
+
+
+
+
+
