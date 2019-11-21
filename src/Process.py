@@ -32,6 +32,10 @@ class Process():
 
 		self.url = self.input_data.request_url
 		self.service_version = self.input_data.service_version
+		try:
+			self.max_features_for_validation = cfg.get('other', 'max_features_for_validation')
+		except:
+			self.max_features_for_validation = None
 
 		try:
 			self.output_raster_path = cfg.get('data', 'raster_output_path')
@@ -63,8 +67,8 @@ if __name__ == '__main__':
 	process = Process(config)
 
 	process.run_algorithm()
-	
+
 	# validation of the result. 
 	validate(process.url, process.layer_name, process.input_data.crs.name, 
 				process.layer_bbox, process.bin_raster_path, process.val_raster_output_path, 
-				process.service_type, process.service_version)
+				process.service_type, process.service_version, process.max_features_for_validation)

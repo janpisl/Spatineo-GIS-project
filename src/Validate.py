@@ -65,8 +65,8 @@ def validate_WMS(url, layer_name, srs, bbox, result_array, output_path, service_
 
 	req_url = "{}?VERSION={}&SERVICE=WMS&REQUEST=GetMap&LAYERS={}&STYLES=&CRS={}&BBOX={}&WIDTH=256&HEIGHT=256&FORMAT=image/png&EXCEPTIONS=XML".format(url, service_version, layer_name, srs, bbox)
 	image = requests.get(req_url)
-	print(req_url)
-	#pdb.set_trace()
+	logging.info("URL used for validation: {}".format(req_url))
+
 
 	image = np.array(Image.open(io.BytesIO(image.content))) 
 
@@ -76,7 +76,7 @@ def validate_WMS(url, layer_name, srs, bbox, result_array, output_path, service_
 
 	return real_data, our_grid
 
-def validate_WFS(url, layer_name, srs, bbox, result_file, output_path, service_version):
+def validate_WFS(url, layer_name, srs, bbox, result_file, output_path, service_version,  max_features_for_validation):
 	wfs_drv = ogr.GetDriverByName('WFS')
 
 	# get just the layer name (as opposed to a URL)
@@ -110,9 +110,10 @@ def validate_WFS(url, layer_name, srs, bbox, result_file, output_path, service_v
 		raise Exception("Couldn't find layer in service")
    
 	feature_count = layer.GetFeatureCount()
-	if feature_count > 100000:
-		   logging.warning("Validation for layer {} skipped. there was too many features: {}".format(layer.GetName(), layer.GetFeatureCount()))
-		   return None
+	if  max_features_for_validation is not None:
+		if feature_count > int(max_features_for_validation):
+			   logging.warning("Validation for layer {} skipped. there was too many features: {}".format(layer.GetName(), layer.GetFeatureCount()))
+			   return None
 
 	logging.info("Layer: {}, Features: {}".format(layer.GetName(), feature_count))
 
@@ -158,7 +159,7 @@ def validate_WFS(url, layer_name, srs, bbox, result_file, output_path, service_v
 
 
 
-def validate(url, layer_name, srs, bbox, result_path, output_path, service_type, service_version):
+def validate(url, layer_name, srs, bbox, result_path, output_path, service_type, service_version, max_features_for_validation):
 
 
 	#self.service_type = Capabilities._get_service()
@@ -175,7 +176,7 @@ def validate(url, layer_name, srs, bbox, result_path, output_path, service_type,
 					
 	elif service_type == 'WFS':
 
-		real_data, result = validate_WFS(url, layer_name, srs, bbox_str, file, output_path, service_version), file.read(1)
+		real_data, result = validate_WFS(url, layer_name, srs, bbox_str, file, output_path, service_version, max_features_for_validation), file.read(1)
 		
 		if real_data is None:
 			return -1

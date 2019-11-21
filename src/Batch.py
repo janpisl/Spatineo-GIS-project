@@ -17,7 +17,7 @@ def run_batch(cfg):
 	directory = cfg.get('data', 'response_file')
 	get_capabilities_docs = cfg.get('data', 'get_capabilities')
 	output_dir = cfg.get('data', 'output_dir')
-
+	max_features = cfg.get('other', 'max_features_for_validation')
 
 	for file_path in glob.glob(directory + '*.json'):
 		file = Path(file_path).stem
@@ -25,6 +25,7 @@ def run_batch(cfg):
 
 		config = configparser.ConfigParser()
 		config.add_section('data')
+		config.add_section('other')
 
 		config.set('data', 'response_file', file_path)
 		config.set('data', 'get_capabilities', get_capabilities_docs + file.split("_")[0] + ".xml")
@@ -34,6 +35,8 @@ def run_batch(cfg):
 		config.set('data', 'raster_output_path', output_dir + file + ".tif")
 		config.set('data', 'binary_raster_output_path', output_dir + "bin_" + file + ".tif")
 		config.set('data', 'validation_raster_output_path', output_dir + "val_" + file + ".tif")
+		config.set('other', 'max_features_for_validation', max_features)
+		
 
 		process = Process(config)
 		process.run_algorithm()
@@ -41,7 +44,7 @@ def run_batch(cfg):
 		# validation of the result. 
 		validate(process.url, process.layer_name, process.input_data.crs.name, 
 					process.layer_bbox, process.bin_raster_path, process.val_raster_output_path, 
-					process.service_type, process.service_version)
+					process.service_type, process.service_version, process.max_features_for_validation)
 
 		logging.info("file {} done \n \n".format(file))
 
