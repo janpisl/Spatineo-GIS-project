@@ -52,8 +52,8 @@ class Algorithm():
 			request_counter += 1
 			if request_counter % 1000 == 0:
 				logging.debug("Feature no. {}".format(request_counter))
-			ref_image, ref_transform = rasterio.mask.mask(self.raster, [feat['geometry']], crop=False)
-			mask = ref_image[0] != nd
+			
+			mask, t, w = rasterio.mask.raster_geometry_mask(self.raster, [feat['geometry']], crop=False, invert=True)
 
 			props = feat['properties']
 			if props['imageAnalysisResult'] == 1:
