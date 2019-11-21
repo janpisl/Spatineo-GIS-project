@@ -31,6 +31,30 @@ class ResultData():
 
 		self.output_dir = output_dir
 
+		# Some helper functions
+		def round_down(val):
+			return floor(val / self.resolution) * self.resolution
+		def round_up(val):
+			return ceil(val / self.resolution) * self.resolution
+
+		minx = round_down(self.extent[0])
+		miny = round_down(self.extent[1])
+		maxx = round_up(self.extent[2])
+		maxy = round_up(self.extent[3])
+
+		# Calculate the scale
+		# "Normal" case
+		if self.crs.is_first_axis_east():
+			self.width = round((maxx - minx) / self.resolution)
+			self.height = round((maxy - miny) / self.resolution)
+			self.transform = rasterio.transform.from_origin(minx, maxy, self.resolution, self.resolution)
+		# If north axis is given first.
+		else:
+			self.height = round((maxx - minx) / self.resolution)
+			self.width = round((maxy - miny) / self.resolution)
+			self.transform = rasterio.transform.from_origin(miny, maxx, self.resolution, self.resolution)
+		self.data = np.zeros(shape=(self.height, self.width))
+
 	def create_empty_raster(self, output_name, driver='GTiff'):
 		''' This function creates an empty raster file with the provided parametres.
 		args:
@@ -39,52 +63,22 @@ class ResultData():
 		returns: the path where the dataset was created (the same as output_name)
 		'''
 
-		bbox = self.extent
-
-		# Round up or down to regarding to the resolution value.
-		
-		# Some helper functions
-		def round_down(val):
-			return floor(val / self.resolution) * self.resolution
-		def round_up(val):
-			return ceil(val / self.resolution) * self.resolution
-
-		minx = round_down(bbox[0])
-		miny = round_down(bbox[1])
-		maxx = round_up(bbox[2])
-		maxy = round_up(bbox[3])
-
-		# Calculate the scale
-		# "Normal" case
-		if self.crs.is_first_axis_east():
-			width = round((maxx - minx) / self.resolution)
-			height = round((maxy - miny) / self.resolution)
-			transform = rasterio.transform.from_origin(minx, maxy, self.resolution, self.resolution)
-		# If north axis is given first.
-		else:
-			height = round((maxx - minx) / self.resolution)
-			width = round((maxy - miny) / self.resolution)
-			transform = rasterio.transform.from_origin(miny, maxx, self.resolution, self.resolution)
-
-		# Init raster with zeros.
-		data = np.zeros(shape=(height, width))
-
 		# Create new dataset file
 		dataset = rasterio.open(
 			self.output_dir + output_name,
 			'w', # Write mode
 			driver=driver,
 			nodata = -99,
-			height=height,
-			width=width,
+			height=self.height,
+			width=self.width,
 			count=1,
-			dtype=str(data.dtype),
+			dtype=str(self.data.dtype),
 			crs=self.crs.name,
-			transform=transform,
+			transform=self.transform,
 		)
 
 		# Write numpy matrix to the dataset.
-		dataset.write(data, 1)
+		dataset.write(self.data, 1)
 		dataset.close()
 
 		return self.output_dir + output_name
