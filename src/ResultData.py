@@ -119,7 +119,7 @@ class ResultData():
 		with fiona.open(
 				self.output_dir + dst_layername + ".gpkg" , 'w', 
 				driver="GPKG",
-				crs=fiona.crs.from_epsg(self.crs.output_crs.to_epsg()) if self.crs.output_crs else src.crs,
+				crs=fiona.crs.from_string(self.crs.output_crs.to_proj4()) if self.crs.output_crs else src.crs,
 				schema={'geometry': 'Polygon', 'properties': {}}) as dst:
 			dst.writerecords(results)
 	

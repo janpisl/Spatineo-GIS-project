@@ -20,7 +20,7 @@ class Projection():
 
 		if output_crs_name:
 			self.output_crs = CRS(output_crs_name)
-			self.output_transform = Transformer.from_crs(self.crs, self.output_crs).transform
+			self.output_transform = Transformer.from_crs(self.crs, self.output_crs, always_xy=True).transform
 		else:
 			self.output_crs = None
 			self.output_transform = None
