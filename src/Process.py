@@ -17,7 +17,8 @@ class Process():
 	def __init__(self, cfg):
 		response_file_path = cfg.get('data', 'response_file')
 		capabilities_path = cfg.get('data', 'get_capabilities')
-		
+		self.output_dir = cfg.get('data', 'output_dir')
+
 		file = response_file_path.split('/')[-1].split('.')[0]
 
 		self.input_data = InputData(response_file_path, capabilities_path)
@@ -26,10 +27,11 @@ class Process():
 		self.layer_bbox = self.input_data.bbox
 		self.service_type = self.input_data.get_service_type()
 
-		self.output_dir = cfg.get('data', 'output_dir')
 		self.result = ResultData(self.input_data.crs, self.layer_bbox, self.output_dir)
 		self.raster = self.result.create_empty_raster('tmp.tif')
+		#		self.coarse_raster = self.result.create_empty_raster('tmp.tif', resolution = "coarse")
 
+		self.features = self.input_data.get_bboxes_as_geojson()
 		self.url = self.input_data.request_url
 		self.service_version = self.input_data.service_version
 		try:
@@ -50,7 +52,7 @@ class Process():
 
 		a = Algorithm(self.raster, self.input_data, self.service_type, self.result)
 
-		return a.solve(self.output_raster_path, self.bin_raster_path)
+		return a.solve(self.features, self.output_raster_path, self.bin_raster_path)
 
 
 if __name__ == '__main__':
