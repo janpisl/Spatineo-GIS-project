@@ -67,7 +67,7 @@ class Algorithm():
 
 
 		eval_raster = np.divide(eval_raster, norm_raster, out=np.zeros_like(eval_raster), where=norm_raster != 0)
-		zero_mask = eval_raster[0] == 0
+		zero_mask = norm_raster[0] == 0
 		logging.info("there was {} requests".format(request_counter))
 		# Save the image into disk.     
 		img_output = rasterio.open(
