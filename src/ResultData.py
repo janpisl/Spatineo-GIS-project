@@ -103,13 +103,13 @@ class ResultData():
 			# Mask value is 1, which means data
 			mask = smoothed == 1
 
-			# # Tolerance for douglas peucker simplification
-			# tol = self.resolution
+			# Tolerance for douglas peucker simplification
+			tol = self.resolution
 			
 			# Transformation and convertion from shapely shape to geojson-like object for fiona.
 			feats = []
 			for (s,v) in shapes(smoothed, mask=mask, transform=src.transform):
-				shp = shape(s)
+				shp = shape(s).simplify(tol)
 				if self.crs.output_transform:
 					shp = shapely_transform(self.crs.output_transform, shp)
 				feats.append(shp)
