@@ -128,7 +128,7 @@ class Capabilities():
 								lonlat2 = elem.text.split() 
 								lonlat2 = [float(i) for i in lonlat2]	
 							else:
-								raise Exception("Unexpected bbox value when parsing xml: {}. Expected LowerCorner or UpperCorner".format(element.tag))	
+								raise Exception("Unexpected bbox value when parsing xml: {}. Expected LowerCorner or UpperCorner".format(elem.tag))	
 						
 						bbox0 = lonlat1 + lonlat2
 						layer = False
@@ -159,7 +159,7 @@ class Capabilities():
 									lonlat2 = elem.text.split() 
 									lonlat2 = [float(i) for i in lonlat2]	
 								else:
-									raise Exception("Unexpected bbox value when parsing xml: {}. Expected LowerCorner or UpperCorner".format(element.tag))	
+									raise Exception("Unexpected bbox value when parsing xml: {}. Expected LowerCorner or UpperCorner".format(elem.tag))	
 							bbox0 = lonlat1 + lonlat2
 						layer = False
 
