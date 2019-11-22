@@ -74,7 +74,7 @@ class Capabilities():
 					if (str(epsg_code) in get_ref_system(element)) or crs_flag is True:
 						bbox = [float(i) for i in [element.attrib['minx'], element.attrib['miny'], element.attrib['maxx'], element.attrib['maxy']]]
 						if crs_flag is True:
-							bbox = transform(bbox_to_tranform, get_ref_system(element), epsg_code)
+							bbox = transform(bbox, get_ref_system(element), epsg_code)
 						break
 			return bbox
 			
