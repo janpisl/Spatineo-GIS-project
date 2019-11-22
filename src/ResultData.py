@@ -98,17 +98,17 @@ class ResultData():
 			image = src.read(1)
 			
 			# Create 1 pixel buffer around areas to smooth output.
-			buffered = scipy.ndimage.maximum_filter(image, (3,3))
+			smoothed = scipy.ndimage.percentile_filter(image, 99, (30,30))
 
 			# Mask value is 1, which means data
-			mask = buffered == 1
+			mask = smoothed == 1
 
 			# # Tolerance for douglas peucker simplification
 			# tol = self.resolution
 			
 			# Transformation and convertion from shapely shape to geojson-like object for fiona.
 			feats = []
-			for (s,v) in shapes(buffered, mask=mask, transform=src.transform):
+			for (s,v) in shapes(smoothed, mask=mask, transform=src.transform):
 				shp = shape(s)
 				if self.crs.output_transform:
 					shp = shapely_transform(self.crs.output_transform, shp)
