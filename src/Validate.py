@@ -161,14 +161,13 @@ def validate_WFS(url, layer_name, srs, bbox, result_file, output_path, service_v
 
 def validate(url, layer_name, srs, bbox, result_path, output_path, service_type, service_version, max_features_for_validation):
 
-
 	#self.service_type = Capabilities._get_service()
 	logging.info("validation starts at {}".format(datetime.datetime.now()))
 	# Open the file to be validated
 	file = rasterio.open(result_path)
 
 	# change bbox from a list into a string, remove spaces and brackets
-	bbox_str = ''.join(char for char in str(bbox) if char not in '[] ')
+	bbox_str = ''.join(char for char in str(bbox) if char not in '[]() ')
 
 	if service_type == 'WMS': 
 

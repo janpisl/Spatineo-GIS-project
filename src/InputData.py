@@ -1,121 +1,158 @@
 import json
 from geojson import Polygon, Feature, FeatureCollection
-
+import math
 import logging
+import xml.etree.ElementTree as ET
+
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
 import datetime
 logging.basicConfig(filename="../../output_data/logs/" + datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") + '.log', level=logging.INFO)
 
-from Projection import Projection, change_bbox_axis_order
-from Capabilities import Capabilities
+from Projection import change_bbox_axis_order, is_first_axis_east
 
-class InputData():
+
+def get_resolution(crs, cfg_resolution):
+
+	unit = crs.axis_info[0].unit_name
+	if unit == 'metre':
+		resolution = cfg_resolution
+	elif unit == 'degree':
+		resolution = cfg_resolution/100000
+	else:
+		raise Exception("The used coordinate unit ({}) is not configured. Cannot continue.".format(unit))
+
+	return resolution
+
+'''
+def parse_crs(raw_crs):
 	
-	def __init__(self, response_file_path, capabilities_path):
+	try:
+		crs = CRS(raw_crs)
+	except pyproj.exceptions.CRSError:
 
-		with open(response_file_path) as source:
-			requests = json.load(source)
-		self.layer_key = requests['layerKey']
-		self.responses = requests['results']
-		self.crs = Projection(self.layer_key['crs'], "EPSG:4326") # TODO: Move output crs to config
-		self.request_url = self.responses[0]['url'].split("?")[0]
-		self.capabilities = Capabilities(capabilities_path, self.get_layer_name(), self.crs)
-		self.bbox = self.capabilities.bbox
-		try:
-			self.service_version = self.responses[0]['url'].split("VERSION=")[1].split("&")[0]
-		except:
-			self.service_version = None
+		elif "EPSG::" in raw_crs:
+			raw_crs_list = raw_crs.replace("::", ":").split(":")
+			crs = CRS((raw_crs_list[-2] + ":" raw_crs_list[-1]))
+		else:
+			raise Exception("Cannot parse CRS '{}' from response file".format(raw_crs))
 
-	def get_crs_name(self):
-		return self.layer_key['crs']
+	return crs
+'''
 
-	def get_layer_name(self):
-		return self.layer_key['layerName']
+def get_service_type(path_to_capabl):
 
-	def get_service_type(self):
-		return self.capabilities._get_service()
+	root = ET.parse(path_to_capabl).getroot()
+	service = None
 
-	def get_bboxes_as_geojson(self):
-		''' This method converts response file to geojson geometries. imageAnalysisResult is included to the geojson features.
-		returns: list of geojson elements
+	if "wms" in root.tag.lower():
+		service = 'WMS'
+
+	elif "wfs" in root.tag.lower():
+		service = 'WFS'
+
+	else:
+		for element in root:
+			for child in element:
+				if "wms" in child.text.lower():
+					return 'WMS'
+				elif "wfs" in child.text.lower():
+					return "WFS"
+
+	if service is None:
+		raise Exception("Couldn't retrieve service type from {}".format(root.tag))
+	
+	return service
+
+
+def get_bboxes_as_geojson(layer_bbox, responses, crs):
+	''' This method converts response file to geojson geometries. imageAnalysisResult is included to the geojson features.
+	returns: list of geojson elements
+	'''
+	features = []
+	
+	if not is_first_axis_east(crs):
+		layer_bbox = change_bbox_axis_order(layer_bbox)
+
+
+	unit = crs.axis_info[0].unit_name
+	if unit == 'metre' or 'meter':
+		extent = [math.floor(layer_bbox[0]), math.floor(layer_bbox[1]), math.ceil(layer_bbox[2]), math.ceil(layer_bbox[3])]
+	elif unit == "degree":
+		c = 100000
+		extent = [math.floor(layer_bbox[0]*c)/c, math.floor(layer_bbox[1]*c)/c, math.ceil(layer_bbox[2]*c)/c, math.ceil(layer_bbox[3]*c)/c]
+	else:
+		raise Exception("Unknown unit type '{}'. Error in get_bboxes_as_geojson".format(unit))
+
+	invalid_request_count = 0
+	bbox_out_count = 0
+
+	count = 0
+
+	coords_min = [float('inf'),float('inf')]
+	coords_max = [float('-inf'),float('-inf')]
+
+	logging.info("Creating geojson objects.")
+	for res in responses:
+		count += 1
+		if count % 1000 == 0:
+			logging.debug("Result no. {}".format(count))
+
+		# Filter out invalid test results
+		if ('imageAnalysisResult' not in res.keys() or 'testResult' not in res.keys()
+			or res['testResult'] != 0):
+			invalid_request_count += 1
+			continue
+
+		# Convert bbox as a list.
+		bbox = list(map(float, res['bBox'].split(',')))
+
+
+		inside = [
+			bbox[0] >= extent[0],
+			bbox[1] >= extent[1],
+			bbox[2] <= extent[2],
+			bbox[3] <= extent[3],
+		]
+
+		# Filter out requests out of the interest area
+		if not all(inside):
+			bbox_out_count += 1
+			continue
+
 		'''
-		features = []
-		extent = self.bbox
-
-		invalid_request_count = 0
-		bbox_out_count = 0
-
-		count = 0
-
-		coords_min = [float('inf'),float('inf')]
-		coords_max = [float('-inf'),float('-inf')]
-
-		logging.info("Creating geojson objects.")
-		for res in self.responses:
-			count += 1
-			if count % 1000 == 0:
-				logging.debug("Result no. {}".format(count))
-
-			# Filter out invalid test results
-			if ('imageAnalysisResult' not in res.keys() or 'testResult' not in res.keys()
-				or res['testResult'] != 0):
-				invalid_request_count += 1
-				continue
-
-			# Convert bbox as a list.
-			bbox = list(map(float, res['bBox'].split(',')))
-
-			if not self.crs.is_first_axis_east():
-				bbox = change_bbox_axis_order(bbox)
-			
-			# Tolerance helps to handle rounding problems in the border areas.
-			unit = self.crs.get_coordinate_unit().lower()
-			tolerance = 1 if unit == 'metre' else 0.000001
-
-			inside = [
-				bbox[0] >= extent[0] - tolerance,
-				bbox[1] >= extent[1] - tolerance,
-				bbox[2] <= extent[2] + tolerance,
-				bbox[3] <= extent[3] + tolerance,
-			]
-
-			# Filter out requests out of the interest area
-			if not all(inside):
-				bbox_out_count += 1
-				continue
-
-			if bbox_out_count == 0:
-				for i in range(len(coords_min)):
-					if bbox[i] < coords_min[i]:
-						coords_min[i] = bbox[i]
-				for i in range(len(coords_max)):
-					if bbox[i + len(coords_max)] > coords_max[i]:
-						coords_max[i] = bbox[i  + len(coords_max)]
+		if bbox_out_count == 0:
+			for i in range(len(coords_min)):
+				if bbox[i] < coords_min[i]:
+					coords_min[i] = bbox[i]
+			for i in range(len(coords_max)):
+				if bbox[i + len(coords_max)] > coords_max[i]:
+					coords_max[i] = bbox[i  + len(coords_max)]
+		'''
 
 
-			# Create a closed Polygon following the edges of the bbox.
-			g = Polygon([[(bbox[0], bbox[1]), (bbox[0], bbox[3]), (bbox[2], bbox[3]), (bbox[2], bbox[1]), (bbox[0], bbox[1])]])
+		# Create a closed Polygon following the edges of the bbox.
+		g = Polygon([[(bbox[0], bbox[1]), (bbox[0], bbox[3]), (bbox[2], bbox[3]), (bbox[2], bbox[1]), (bbox[0], bbox[1])]])
 
-			# Save other data
-			props = {
-				'imageAnalysisResult': res['imageAnalysisResult'],
-				'testResult': res['testResult'],
-				'requestTime': res['requestTime']
-			}
-			feat = Feature(geometry = g, properties = props)
-			
-			features.append(feat)
-
-		if invalid_request_count > 0:
-			logging.info("Filtered {} requests away due to failed request.".format(invalid_request_count))
-
-		if bbox_out_count > 0:
-			logging.info("Filtered {} requests way because request bbox was not completely within layer bbox".format(bbox_out_count))
-		#TODO: this needs to be a square; now it isn't
-		'''else:
-			self.bbox = coords_min + coords_max
-			logging.info("Bounding box set to the extent of all requests to {}".format(self.bbox))'''
-
-		feat_c = FeatureCollection(features)
+		# Save other data
+		props = {
+			'imageAnalysisResult': res['imageAnalysisResult'],
+			'testResult': res['testResult'],
+			'requestTime': res['requestTime']
+		}
+		feat = Feature(geometry = g, properties = props)
 		
-		return feat_c
+		features.append(feat)
+
+	if invalid_request_count > 0:
+		logging.info("Filtered {} requests away due to failed request.".format(invalid_request_count))
+
+	if bbox_out_count > 0:
+		logging.info("Filtered {} requests way because request bbox was not completely within layer bbox".format(bbox_out_count))
+	#TODO: this needs to be a square; now it isn't
+	'''else:
+		self.bbox = coords_min + coords_max
+		logging.info("Bounding box set to the extent of all requests to {}".format(self.bbox))'''
+
+	feat_c = FeatureCollection(features)
+	
+	return feat_c
