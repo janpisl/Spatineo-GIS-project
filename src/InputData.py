@@ -64,7 +64,7 @@ def get_service_type(path_to_capabl):
 	return service
 
 
-def get_bboxes_as_geojson(layer_bbox, responses, crs):
+def get_bboxes_as_geojson(layer_bbox, responses, crs, sample=False):
 	''' This method converts response file to geojson geometries. imageAnalysisResult is included to the geojson features.
 	returns: list of geojson elements
 	'''
@@ -141,7 +141,11 @@ def get_bboxes_as_geojson(layer_bbox, responses, crs):
 		}
 		feat = Feature(geometry = g, properties = props)
 		
-		features.append(feat)
+		if sample:
+			if count % 10 == 0:
+				features.append(feat)
+		else:
+			features.append(feat)
 
 	if invalid_request_count > 0:
 		logging.info("Filtered {} requests away due to failed request.".format(invalid_request_count))

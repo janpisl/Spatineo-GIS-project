@@ -14,13 +14,12 @@ def transform_bbox(bbox, transform_from, transform_to):
 	from_crs_84_flag = None
 
 	if transform_from == transform_to:
-		logging.warning("we are trying to transform between two identical crs: {}".format(transform_to))
+		logging.warning("Trying to transform between two identical crs: {}".format(transform_to))
 		return bbox
 
 	if transform_to == "CRS:84":
 		transform_to == "EPSG:4326"
 		to_crs_84_flag = True
-
 
 
 	if transform_from == "CRS:84":
@@ -105,8 +104,6 @@ def get_layer_bbox_wms(root, layer_name, crs):
 				bbox = search(elements, layer_name="not_required", epsg_code=epsg_code, crs_flag = True)
 
 	return bbox
-
-
 
 
 def get_layer_bbox_wfs(root, layer_name, crs):
