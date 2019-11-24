@@ -62,8 +62,11 @@ def validate_WMS(url, layer_name, srs, bbox, result_array, output_path, service_
 	#TODO: set height & width to higher values so more features are rendered? what values does Spatineo use?? 
 	if service_version is None:
 		service_version = "1.3.0"
+	if service_version is "1.3.0":
+		req_url = "{}?VERSION={}&SERVICE=WMS&REQUEST=GetMap&LAYERS={}&STYLES=&CRS={}&BBOX={}&WIDTH=256&HEIGHT=256&FORMAT=image/png&EXCEPTIONS=XML".format(url, service_version, layer_name, srs, bbox)
+	elif service_version == "1.1.1":
+		req_url = "{}?VERSION={}&SERVICE=WMS&REQUEST=GetMap&LAYERS={}&STYLES=&SRS={}&BBOX={}&WIDTH=256&HEIGHT=256&FORMAT=image/png&EXCEPTIONS=XML".format(url, service_version, layer_name, srs, bbox)
 
-	req_url = "{}?VERSION={}&SERVICE=WMS&REQUEST=GetMap&LAYERS={}&STYLES=&CRS={}&BBOX={}&WIDTH=256&HEIGHT=256&FORMAT=image/png&EXCEPTIONS=XML".format(url, service_version, layer_name, srs, bbox)
 	image = requests.get(req_url)
 	logging.info("URL used for validation: {}".format(req_url))
 
