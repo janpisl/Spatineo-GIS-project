@@ -60,25 +60,32 @@ class Process():
 		except:
 			self.service_version = None
 
-
+		#TODO: delete one of these two
 		self.request_url = self.responses[0]['url'].split("?")[0]
+		self.url = self.responses[0]['url'].split("?")[0]
 
+
+		## INITIAL PROCESSING TO GET SMALLER BBOX
 		#TODO: why is this returning tuple instead of a list??
+
 		self.layer_bbox = get_layer_bbox(capabilities_path, self.layer_name, self.crs, self.service_type)
 
 		#uses only 1/10 for bbox shrinking 
 		self.features_sample = get_bboxes_as_geojson(self.layer_bbox, self.responses, self.crs, sample = True)
 
-		import pdb
-		pdb.set_trace()
 		self.coarse_raster = create_empty_raster(self.output_dir + "/" + "tmp_coarse.tif" , self.crs, self.layer_bbox, resolution="coarse")
 
+		#TODO: this is not working correctly
 		self.bbox = self.shrink_bbox(self.coarse_raster,self.features_sample)
+		## END
 
+		#until self.bbox is fixed, use layer_bbox as usual
+		#self.features = get_bboxes_as_geojson(self.bbox, self.responses, self.crs)
 
+		self.features = get_bboxes_as_geojson(self.layer_bbox, self.responses, self.crs)
+		#pdb.set_trace()
 		self.raster = create_empty_raster(self.output_dir + "/" + "tmp.tif" , self.crs, self.layer_bbox, self.resolution)
 
-		self.url = self.responses[0]['url'].split("?")[0]
 
 
 	def shrink_bbox(self,coarse_raster,features):
@@ -96,7 +103,7 @@ class Process():
 		min_coords = open_coarse_raster.xy(datapixel_indices[0][1], datapixel_indices[0][2], offset='ur')
 		max_coords = open_coarse_raster.xy(datapixel_indices[-1][1], datapixel_indices[-1][2], offset='ll')
 
-		return min_coords + max_coords
+		return [int(round(coord)) for coord in min_coords + max_coords]
 
 
 
