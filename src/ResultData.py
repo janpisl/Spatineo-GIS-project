@@ -18,33 +18,14 @@ logging.basicConfig(filename="../../output_data/logs/" + datetime.datetime.now()
 from Projection import is_first_axis_east
 
 
-def create_empty_raster(output_path, crs, bbox, resolution, driver='GTiff'):
-	''' This function creates an empty raster file with the provided parametres.
-	args:
-		output_name: the path where the dataset will be created
-		driver: GDAL raster driver to create datasets
-	returns: the path where the dataset was created (the same as output_name)
-	'''
-
-
-
-	COARSE_RES = 10
-
-	# just some example values[9554.53441679047, 531538.6292625391, 443681.5898537142, 1129689.0494627843]
-	# if we pass resolution argument, choose such resolution that it it ca. 10*10 pixels
-	if resolution == "coarse":
-		avg_dist = (abs(bbox[0] - bbox[2]) + abs(bbox[1] - bbox[3]))/2
-		resolution = avg_dist/COARSE_RES
-
-
-	# Round up or down to regarding to the resolution value.
+def get_raster_shapes(resolution, bbox, crs):
 	
 	# Some helper functions
 	def round_down(val):
 		return floor(val / resolution) * resolution
 	def round_up(val):
 		return ceil(val / resolution) * resolution
-
+	# Round up or down to regarding to the resolution value.
 	minx = round_down(bbox[0])
 	miny = round_down(bbox[1])
 	maxx = round_up(bbox[2])
@@ -62,6 +43,36 @@ def create_empty_raster(output_path, crs, bbox, resolution, driver='GTiff'):
 		width = round((maxy - miny) / resolution)
 		transform = rasterio.transform.from_origin(miny, maxx, resolution, resolution)
 
+
+	return height, width, transform
+
+def create_empty_raster(output_path, crs, bbox, resolution, raster_max_size=500000, driver='GTiff'):
+	''' This function creates an empty raster file with the provided parametres.
+	args:
+		output_name: the path where the dataset will be created
+		driver: GDAL raster driver to create datasets
+	returns: the path where the dataset was created (the same as output_name)
+	'''
+
+
+
+	COARSE_RES = 10
+
+	# just some example values[9554.53441679047, 531538.6292625391, 443681.5898537142, 1129689.0494627843]
+	# if we pass resolution argument, choose such resolution that it it ca. 10*10 pixels
+	if resolution == "coarse":
+		avg_dist = (abs(bbox[0] - bbox[2]) + abs(bbox[1] - bbox[3]))/2
+		resolution = avg_dist/COARSE_RES
+
+	while True:
+		height, width, transform = get_raster_shapes(resolution, bbox, crs)
+		if height*width <= raster_max_size:
+			break
+		else:
+			resolution = resolution*2
+
+	logging.info("Resolution with which the analysis will be done set to: '{}' ".format(resolution))
+	logging.info("Raster size set to {}, {}".format(height, width))
 	# Init raster with zeros.
 	data = np.zeros(shape=(height, width))
 
