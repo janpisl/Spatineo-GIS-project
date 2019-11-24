@@ -58,8 +58,7 @@ def create_empty_raster(output_path, crs, bbox, resolution, max_raster_size, dri
 	skip_logging = False
 	COARSE_RES = 50
 
-	# just some example values[9554.53441679047, 531538.6292625391, 443681.5898537142, 1129689.0494627843]
-	# if we pass resolution argument, choose such resolution that it it ca. 10*10 pixels
+	# if we pass resolution argument, choose such resolution that  height*width are approx. == COARSE_RES
 	if resolution == "coarse":
 		avg_dist = (abs(bbox[0] - bbox[2]) + abs(bbox[1] - bbox[3]))/2
 		resolution = avg_dist/COARSE_RES
