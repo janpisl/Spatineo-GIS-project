@@ -20,13 +20,13 @@ logging.basicConfig(filename=datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S
 
 
 
-def solve(features, empty_raster, output_path, bin_output_path):
+def compute_density_rasters(features, empty_raster):
 	open_raster = rasterio.open(empty_raster)
 	eval_raster = open_raster.read()
 	norm_raster = np.copy(eval_raster)
 	request_counter = 0
-	nd = open_raster.nodata
 	logging.info("Iterating through geojson objects...")
+
 	for feat in features['features']:
 		request_counter += 1
 		if request_counter % 1000 == 0:
@@ -45,12 +45,20 @@ def solve(features, empty_raster, output_path, bin_output_path):
 			logging.warning(feat)
 
 
+	return eval_raster, norm_raster, request_counter
+
+def solve(features, empty_raster, output_path, bin_output_path):
+
+	eval_raster, norm_raster, request_counter = compute_density_rasters(features, empty_raster)
+	open_raster = rasterio.open(empty_raster)
+	nd = open_raster.nodata
+
 	eval_raster = np.divide(eval_raster, norm_raster, out=np.zeros_like(eval_raster), where=norm_raster != 0)
 	zero_mask = norm_raster[0] == 0
-	logging.info("there was {} requests".format(request_counter))
+	logging.info("there was {} requests included in the analysis".format(request_counter))
 	# Save the image into disk.     
 	img_output = rasterio.open(
-		output_path,
+		"../../output_data/35_norm_raster.tif",
 		'w',
 		driver='GTiff',
 		nodata=nd,
@@ -60,8 +68,9 @@ def solve(features, empty_raster, output_path, bin_output_path):
 		dtype = open_raster.dtypes[0],
 		crs=open_raster.crs,
 		transform=open_raster.transform)   
-	img_output.write(eval_raster)
+	img_output.write(norm_raster)
 	img_output.close()
+	logging.info("request_counter: {}".format(request_counter))
 	logging.debug("norm average: ",np.average(norm_raster))
 
 	magic_constant = 0.1
@@ -88,7 +97,6 @@ def solve(features, empty_raster, output_path, bin_output_path):
 
 	logging.info("algorithm finished, binary raster has been created")
 
-	
 
 if __name__ == '__main__':
 	# This is an example how we can run the algorithm separately (without Process.py) if we need to.
