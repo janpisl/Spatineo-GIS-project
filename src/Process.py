@@ -1,15 +1,17 @@
 import pdb
+import rasterio
 import configparser
 import argparse
 import json
 import logging
 import xml.etree.ElementTree as ET
+import numpy as np
 
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
 import datetime
 logging.basicConfig(filename="../../output_data/logs/" + datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") + '.log', level=logging.INFO)
 
-from Algorithm import solve
+from Algorithm import solve, compute_density_rasters
 from Validate import validate
 from InputData import get_resolution, get_service_type, get_bboxes_as_geojson
 from ResultData import create_empty_raster, convert_to_gpkg
@@ -24,6 +26,7 @@ class Process():
 		self.output_dir = cfg.get('data', 'output_dir')
 		cfg_resolution = int(cfg.get('other', 'resolution'))
 
+		file = response_file_path.split('/')[-1].split('.')[0]
 
 		try:
 			self.output_raster_path = cfg.get('data', 'raster_output_path')
@@ -39,9 +42,6 @@ class Process():
 		except:
 			self.max_features_for_validation = None
 
-
-		file = response_file_path.split('/')[-1].split('.')[0]
-
 		with open(response_file_path) as source:
 			self.responses_file = json.load(source)
 
@@ -50,6 +50,7 @@ class Process():
 
 		self.layer_name = self.responses_header['layerName']
 		raw_crs =  self.responses_header['crs']
+
 		self.crs = CRS(raw_crs)
 		self.resolution = get_resolution(self.crs, cfg_resolution)
 
@@ -65,12 +66,37 @@ class Process():
 		#TODO: why is this returning tuple instead of a list??
 		self.layer_bbox = get_layer_bbox(capabilities_path, self.layer_name, self.crs, self.service_type)
 
+		#uses only 1/10 for bbox shrinking 
+		self.features_sample = get_bboxes_as_geojson(self.layer_bbox, self.responses, self.crs, sample = True)
+
+		import pdb
+		pdb.set_trace()
+		self.coarse_raster = create_empty_raster(self.output_dir + "/" + "tmp_coarse.tif" , self.crs, self.layer_bbox, resolution="coarse")
+
+		self.bbox = self.shrink_bbox(self.coarse_raster,self.features_sample)
+
+
 		self.raster = create_empty_raster(self.output_dir + "/" + "tmp.tif" , self.crs, self.layer_bbox, self.resolution)
 
-		#		self.coarse_raster = self.result.create_empty_raster('tmp.tif', resolution = "coarse")
-
-		self.features = get_bboxes_as_geojson(self.layer_bbox, self.responses, self.crs)
 		self.url = self.responses[0]['url'].split("?")[0]
+
+
+	def shrink_bbox(self,coarse_raster,features):
+
+		eval_raster, norm_raster, request_counter = compute_density_rasters(features, coarse_raster)
+
+		#do not compare against request_counter but np.sum(norm_raster) because that doesnt include invalid requests
+		# or rathter np.max(norm_raster)
+		bin_norm_raster = norm_raster > np.max(norm_raster)/50
+
+		open_coarse_raster = rasterio.open(coarse_raster)
+
+		datapixel_indices = np.argwhere(bin_norm_raster == True)
+
+		min_coords = open_coarse_raster.xy(datapixel_indices[0][1], datapixel_indices[0][2], offset='ur')
+		max_coords = open_coarse_raster.xy(datapixel_indices[-1][1], datapixel_indices[-1][2], offset='ll')
+
+		return min_coords + max_coords
 
 
 

@@ -15,7 +15,6 @@ import logging
 import datetime
 logging.basicConfig(filename="../../output_data/logs/" + datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") + '.log', level=logging.INFO)
 
-
 from Projection import is_first_axis_east
 
 
@@ -28,7 +27,14 @@ def create_empty_raster(output_path, crs, bbox, resolution, driver='GTiff'):
 	'''
 
 
-	#TODO: replace output_name and output_dir with output_path
+
+	COARSE_RES = 10
+
+	# just some example values[9554.53441679047, 531538.6292625391, 443681.5898537142, 1129689.0494627843]
+	# if we pass resolution argument, choose such resolution that it it ca. 10*10 pixels
+	if resolution == "coarse":
+		avg_dist = (abs(bbox[0] - bbox[2]) + abs(bbox[1] - bbox[3]))/2
+		resolution = avg_dist/COARSE_RES
 
 
 	# Round up or down to regarding to the resolution value.

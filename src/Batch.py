@@ -18,6 +18,7 @@ def run_batch(cfg):
 	get_capabilities_docs = cfg.get('data', 'get_capabilities')
 	output_dir = cfg.get('data', 'output_dir')
 	max_features = cfg.get('other', 'max_features_for_validation')
+	resolution = cfg.get('other', 'resolution')
 
 	for file_path in glob.glob(directory + '*.json'):
 		file = Path(file_path).stem
@@ -36,13 +37,14 @@ def run_batch(cfg):
 		config.set('data', 'binary_raster_output_path', output_dir + "bin_" + file + ".tif")
 		config.set('data', 'validation_raster_output_path', output_dir + "val_" + file + ".tif")
 		config.set('other', 'max_features_for_validation', max_features)
+		config.set('other', 'resolution', resolution)
 		
 
 		process = Process(config)
 		process.run_algorithm()
 
 		# validation of the result. 
-		validate(process.url, process.layer_name, process.input_data.crs.name, 
+		validate(process.url, process.layer_name, process.crs.crs_code, 
 					process.layer_bbox, process.bin_raster_path, process.val_raster_output_path, 
 					process.service_type, process.service_version, process.max_features_for_validation)
 

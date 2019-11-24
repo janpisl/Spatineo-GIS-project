@@ -96,6 +96,8 @@ def validate_WFS(url, layer_name, srs, bbox, result_file, output_path, service_v
 
 	#TODO: use version -> if service_version is not None: ...
 	req_url = "{}?service=wfs&version=2.0.0&srsName={}&BBOX={}".format(url, srs, bbox)
+	logging.info("URL used for validation: {}".format('WFS:' + req_url))
+
 	wfs_ds = wfs_drv.Open('WFS:' + req_url)
 	if not wfs_ds:
 		logging.error("Couldn't open connection to the server.")
