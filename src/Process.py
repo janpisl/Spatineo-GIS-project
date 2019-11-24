@@ -24,6 +24,7 @@ class Process():
 		self.output_dir = cfg.get('data', 'output_dir')
 		cfg_resolution = int(cfg.get('other', 'resolution'))
 
+		file = response_file_path.split('/')[-1].split('.')[0]
 
 		try:
 			self.output_raster_path = cfg.get('data', 'raster_output_path')
@@ -38,9 +39,6 @@ class Process():
 			self.max_features_for_validation = int(cfg.get('other', 'max_features_for_validation'))
 		except:
 			self.max_features_for_validation = None
-
-
-		file = response_file_path.split('/')[-1].split('.')[0]
 
 		with open(response_file_path) as source:
 			self.responses_file = json.load(source)
