@@ -62,16 +62,21 @@ def validate_WMS(url, layer_name, srs, bbox, result_array, output_path, service_
 	#TODO: properly deal with service_version == None
 	if service_version is None:
 		service_version = "1.3.0"
-	if service_version is "1.3.0":
+	if service_version == "1.3.0":
 		req_url = "{}?VERSION={}&SERVICE=WMS&REQUEST=GetMap&LAYERS={}&STYLES=&CRS={}&BBOX={}&WIDTH=256&HEIGHT=256&FORMAT=image/png&EXCEPTIONS=XML".format(url, service_version, layer_name, srs, bbox)
 	elif service_version == "1.1.1":
 		req_url = "{}?VERSION={}&SERVICE=WMS&REQUEST=GetMap&LAYERS={}&STYLES=&SRS={}&BBOX={}&WIDTH=256&HEIGHT=256&FORMAT=image/png&EXCEPTIONS=XML".format(url, service_version, layer_name, srs, bbox)
+	else:
+		raise Exception("unknown service_version {}".format(service_version))
 
-	image = requests.get(req_url)
 	logging.info("URL used for validation: {}".format(req_url))
 
+	image_response = requests.get(req_url)
 
-	image = np.array(Image.open(io.BytesIO(image.content))) 
+	try: 
+		image = np.array(Image.open(io.BytesIO(image_response.content))) 
+	except:
+		return None, None
 
 	real_data = test_for_var(image).astype("uint8")
 
@@ -183,8 +188,9 @@ def validate(url, layer_name, srs, bbox, result_path, output_path, service_type,
 
 		real_data, result = validate_WFS(url, layer_name, srs, bbox_str, file, output_path, service_version, max_features_for_validation), file.read(1)
 		
-		if real_data is None:
-			return -1
+	if real_data is None:
+		logging.warning("Validation not successful. *feeling embarassed*")
+		return -1
 
 	# Since result is binary, the comparison is 0 if some value was the same.
 	# 1 if we got false negative and -1 if we got false positive.
