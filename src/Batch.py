@@ -19,6 +19,8 @@ def run_batch(cfg):
 	output_dir = cfg.get('data', 'output_dir')
 	max_features = cfg.get('other', 'max_features_for_validation')
 	resolution = cfg.get('other', 'resolution')
+	max_raster_size = cfg.get('other', 'max_raster_size')
+
 
 	for file_path in glob.glob(directory + '*.json'):
 		file = Path(file_path).stem
@@ -38,7 +40,8 @@ def run_batch(cfg):
 		config.set('data', 'validation_raster_output_path', output_dir + "val_" + file + ".tif")
 		config.set('other', 'max_features_for_validation', max_features)
 		config.set('other', 'resolution', resolution)
-		
+		config.set('other', 'max_raster_size', max_raster_size)
+
 
 		process = Process(config)
 		process.run_algorithm()
