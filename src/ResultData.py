@@ -1,7 +1,7 @@
+from shapely.geometry import shape, mapping
+from shapely.ops import transform as shapely_transform, cascaded_union # TODO: check naming if it overlapping or not to variables of this file?
 import rasterio
 from rasterio.features import shapes
-from shapely.geometry import shape, mapping
-from shapely.ops import transform as shapely_transform # TODO: check naming if it overlapping or not to variables of this file?
 import fiona
 import fiona.crs
 import numpy as np
@@ -109,12 +109,15 @@ def convert_to_gpkg(crs, output_dir, resolution, input_file, output_crs=None):
 				shp = shapely_transform(tr, shp)
 			feats.append(shp)
 
-		results = ({'geometry': mapping(f), 'properties': {}} for f in feats)
+		# Create multipolygon if necessary
+		geom = cascaded_union(feats)
+
+		results = ({'geometry': mapping(g), 'properties': {}} for g in [geom])
 
 	with fiona.open(
-			output_dir + dst_layername + ".gpkg" , 'w', 
-			driver="GPKG",
+			output_dir + dst_layername + ".geojson" , 'w', 
+			driver="GeoJSON",
 			crs=fiona.crs.from_string(output_crs.to_proj4()) if output_crs else src.crs,
-			schema={'geometry': 'Polygon', 'properties': {}}) as dst:
+			schema={'geometry': geom.type, 'properties': {}}) as dst:
 		dst.writerecords(results)
 

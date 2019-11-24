@@ -1,3 +1,5 @@
+from shapely.geometry import shape, MultiPolygon, asShape
+from shapely.ops import cascaded_union
 import configparser
 import argparse
 
@@ -5,9 +7,6 @@ import rasterio
 import rasterio.mask
 import json
 from geojson import Feature
-from shapely.geometry import shape, MultiPolygon, asShape
-from shapely.ops import cascaded_union
-import ogr
 
 import pdb
 import numpy as np
