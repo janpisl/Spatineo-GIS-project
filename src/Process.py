@@ -45,6 +45,8 @@ class Process():
 		with open(response_file_path) as source:
 			self.responses_file = json.load(source)
 
+		self.max_raster_size = int(cfg.get('other', 'max_raster_size'))
+
 		self.responses_header = self.responses_file['layerKey']
 		self.responses = self.responses_file['results']
 
@@ -72,9 +74,14 @@ class Process():
 		#uses only 1/10 for bbox shrinking 
 		self.features_sample = get_bboxes_as_geojson(self.layer_bbox, self.responses, self.crs, sample = True)
 
-		self.coarse_raster = create_empty_raster(self.output_dir + "/" + "tmp_coarse.tif" , self.crs, self.layer_bbox, resolution="coarse")
+		self.coarse_raster = create_empty_raster(self.output_dir + "/" + "tmp_coarse.tif", 
+			self.crs, self.layer_bbox, resolution="coarse", max_raster_size=self.max_raster_size)
 
+		#TODO: set threshold based on observations!!
 		self.bbox = self.shrink_bbox(self.coarse_raster,self.features_sample)
+		logging.info("layer bbox: {}".format(self.layer_bbox))
+		logging.info("shrinked bbox: {}".format(self.bbox))
+
 		# If shrinked bbox is larger or equal to original, use original
 		if (self.layer_bbox[3]-self.layer_bbox[1]) <= (self.bbox[3]-self.bbox[1]) and (self.layer_bbox[2]-self.layer_bbox[0]) <= (self.bbox[2]-self.bbox[0]):
 			self.bbox = self.layer_bbox
@@ -87,7 +94,7 @@ class Process():
 		#self.features = get_bboxes_as_geojson(self.bbox, self.responses, self.crs)
 
 		self.features = get_bboxes_as_geojson(self.bbox, self.responses, self.crs)
-		self.raster = create_empty_raster(self.output_dir + "/" + "tmp.tif" , self.crs, self.bbox, self.resolution)
+		self.raster = create_empty_raster(self.output_dir + "/" + "tmp.tif" , self.crs, self.bbox, self.resolution, max_raster_size=self.max_raster_size)
 
 
 

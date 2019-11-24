@@ -112,7 +112,8 @@ def validate_WFS(url, layer_name, srs, bbox, result_file, output_path, service_v
 	# Get a specific layer
 	layer = wfs_ds.GetLayerByName(layer_name)
 	if not layer:
-		raise Exception("Couldn't find layer in service")
+		logging.error("Couldn't find layer in service")
+		return None
    
 	feature_count = layer.GetFeatureCount()
 	if  max_features_for_validation is not None:
