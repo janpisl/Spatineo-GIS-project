@@ -58,8 +58,8 @@ def test_for_var(image):
 
 def validate_WMS(url, layer_name, srs, bbox, result_array, output_path, service_version):
 	
-	#TODO: CRS/SRS (depending on version)
 	#TODO: set height & width to higher values so more features are rendered? what values does Spatineo use?? 
+	#TODO: properly deal with service_version == None
 	if service_version is None:
 		service_version = "1.3.0"
 	if service_version is "1.3.0":

@@ -67,7 +67,6 @@ class Process():
 
 		## INITIAL PROCESSING TO GET SMALLER BBOX
 		#TODO: why is this returning tuple instead of a list??
-
 		self.layer_bbox = get_layer_bbox(capabilities_path, self.layer_name, self.crs, self.service_type)
 
 		#uses only 1/10 for bbox shrinking 
@@ -75,16 +74,20 @@ class Process():
 
 		self.coarse_raster = create_empty_raster(self.output_dir + "/" + "tmp_coarse.tif" , self.crs, self.layer_bbox, resolution="coarse")
 
-		#TODO: this is not working correctly
 		self.bbox = self.shrink_bbox(self.coarse_raster,self.features_sample)
+		# If shrinked bbox is larger or equal to original, use original
+		if (self.layer_bbox[3]-self.layer_bbox[1]) <= (self.bbox[3]-self.bbox[1]) and (self.layer_bbox[2]-self.layer_bbox[0]) <= (self.bbox[2]-self.bbox[0]):
+			self.bbox = self.layer_bbox
+			logging.info("Bounding box from get_capabilities is being used.")
+
+
 		## END
 
 		#until self.bbox is fixed, use layer_bbox as usual
 		#self.features = get_bboxes_as_geojson(self.bbox, self.responses, self.crs)
 
-		self.features = get_bboxes_as_geojson(self.layer_bbox, self.responses, self.crs)
-		#pdb.set_trace()
-		self.raster = create_empty_raster(self.output_dir + "/" + "tmp.tif" , self.crs, self.layer_bbox, self.resolution)
+		self.features = get_bboxes_as_geojson(self.bbox, self.responses, self.crs)
+		self.raster = create_empty_raster(self.output_dir + "/" + "tmp.tif" , self.crs, self.bbox, self.resolution)
 
 
 
@@ -94,14 +97,14 @@ class Process():
 
 		#do not compare against request_counter but np.sum(norm_raster) because that doesnt include invalid requests
 		# or rathter np.max(norm_raster)
-		bin_norm_raster = norm_raster > np.max(norm_raster)/50
+		bin_norm_raster = norm_raster > np.max(norm_raster)/1000
 
 		open_coarse_raster = rasterio.open(coarse_raster)
 
 		datapixel_indices = np.argwhere(bin_norm_raster == True)
 
-		min_coords = open_coarse_raster.xy(datapixel_indices[0][1], datapixel_indices[0][2], offset='ur')
-		max_coords = open_coarse_raster.xy(datapixel_indices[-1][1], datapixel_indices[-1][2], offset='ll')
+		min_coords = open_coarse_raster.xy(np.max(datapixel_indices[:,1]), np.min(datapixel_indices[:,2]), offset='ll')
+		max_coords = open_coarse_raster.xy(np.min(datapixel_indices[:,1]), np.max(datapixel_indices[:,2]), offset='ur')
 
 		return [int(round(coord)) for coord in min_coords + max_coords]
 
