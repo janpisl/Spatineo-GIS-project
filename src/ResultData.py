@@ -9,7 +9,7 @@ import scipy.ndimage
 from math import floor, ceil
 # from osgeo import gdal, ogr
 # import sys
-
+from pyproj import Transformer
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
 import datetime
@@ -80,7 +80,7 @@ def create_empty_raster(output_path, crs, bbox, resolution, driver='GTiff'):
 	return output_path
 		
 
-def convert_to_gpkg(crs, output_dir, resolution, input_file):
+def convert_to_gpkg(crs, output_dir, resolution, input_file, output_crs=None):
 	# Create layer name based on the raster file name
 	dst_layername = input_file.split('/')[-1].split('.')[0]
 	
@@ -88,7 +88,7 @@ def convert_to_gpkg(crs, output_dir, resolution, input_file):
 		image = src.read(1)
 		
 		# Create 1 pixel buffer around areas to smooth output.
-		smoothed = scipy.ndimage.percentile_filter(image, 99, (30,30))
+		smoothed = scipy.ndimage.percentile_filter(image, 70, (5,5))
 
 		# Mask value is 1, which means data
 		mask = smoothed == 1
@@ -96,12 +96,17 @@ def convert_to_gpkg(crs, output_dir, resolution, input_file):
 		# Tolerance for douglas peucker simplification
 		tol = resolution
 		
+		if crs != output_crs:
+			tr = Transformer.from_crs(crs, output_crs, always_xy=True).transform
+		else:
+			tr = None
+
 		# Transformation and convertion from shapely shape to geojson-like object for fiona.
 		feats = []
 		for (s,v) in shapes(smoothed, mask=mask, transform=src.transform):
 			shp = shape(s).simplify(tol)
-			if crs.output_transform:
-				shp = shapely_transform(crs.output_transform, shp)
+			if tr:
+				shp = shapely_transform(tr, shp)
 			feats.append(shp)
 
 		results = ({'geometry': mapping(f), 'properties': {}} for f in feats)
@@ -109,7 +114,7 @@ def convert_to_gpkg(crs, output_dir, resolution, input_file):
 	with fiona.open(
 			output_dir + dst_layername + ".gpkg" , 'w', 
 			driver="GPKG",
-			crs=fiona.crs.from_string(crs.output_crs.to_proj4()) if crs.output_crs else src.crs,
+			crs=fiona.crs.from_string(output_crs.to_proj4()) if output_crs else src.crs,
 			schema={'geometry': 'Polygon', 'properties': {}}) as dst:
 		dst.writerecords(results)
 

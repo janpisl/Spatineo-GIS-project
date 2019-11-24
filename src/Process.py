@@ -22,8 +22,12 @@ class Process():
 		response_file_path = cfg.get('data', 'response_file')
 		capabilities_path = cfg.get('data', 'get_capabilities')
 		self.output_dir = cfg.get('data', 'output_dir')
-		cfg_resolution = int(cfg.get('other', 'resolution'))
-
+		cfg_resolution = int(cfg.get('result', 'resolution'))
+		try:
+			output_crs = cfg.get('result', 'crs')
+		except:
+			output_crs = "EPSG:4326"
+		self.output_crs = CRS(output_crs)
 		file = response_file_path.split('/')[-1].split('.')[0]
 
 		try:
@@ -78,7 +82,7 @@ class Process():
 		#a = Algorithm(self.raster, self.input_data, self.service_type, self.result)
 
 		solve(self.features, self.raster, self.output_raster_path, self.bin_raster_path)
-		convert_to_gpkg(self.crs, self.output_dir, self.resolution, self.bin_raster_path)
+		convert_to_gpkg(self.crs, self.output_dir, self.resolution, self.bin_raster_path, self.output_crs)
 
 
 if __name__ == '__main__':

@@ -60,7 +60,7 @@ def get_layer_bbox_wms(root, layer_name, crs):
 
 	bbox = None
 	
-	epsg_code = crs.to_epsg
+	epsg_code = crs.to_epsg()
 
 	def get_ref_system(element): # local function for getting reference system for getCapabilities file
 		try: 
@@ -171,7 +171,7 @@ def get_layer_bbox_wfs(root, layer_name, crs):
 	# conversion of bbox0 (WGS84 to self.crs)
 	if not bbox and bbox0:
 
-		bbox = transform_bbox(bbox0, "EPSG:4326", crs.to_epsg)
+		bbox = transform_bbox(bbox0, "EPSG:4326", crs.to_epsg())
 
 
 	return bbox
