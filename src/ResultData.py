@@ -46,7 +46,7 @@ def get_raster_shapes(resolution, bbox, crs):
 
 	return height, width, transform
 
-def create_empty_raster(output_path, crs, bbox, resolution, raster_max_size=500000, driver='GTiff'):
+def create_empty_raster(output_path, crs, bbox, resolution, max_raster_size, driver='GTiff'):
 	''' This function creates an empty raster file with the provided parametres.
 	args:
 		output_name: the path where the dataset will be created
@@ -56,7 +56,7 @@ def create_empty_raster(output_path, crs, bbox, resolution, raster_max_size=5000
 
 
 	skip_logging = False
-	COARSE_RES = 10
+	COARSE_RES = 50
 
 	# just some example values[9554.53441679047, 531538.6292625391, 443681.5898537142, 1129689.0494627843]
 	# if we pass resolution argument, choose such resolution that it it ca. 10*10 pixels
@@ -67,7 +67,7 @@ def create_empty_raster(output_path, crs, bbox, resolution, raster_max_size=5000
 
 	while True:
 		height, width, transform = get_raster_shapes(resolution, bbox, crs)
-		if height*width <= raster_max_size:
+		if height*width <= max_raster_size:
 			break
 		else:
 			resolution = resolution*2
