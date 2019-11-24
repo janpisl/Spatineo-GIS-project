@@ -55,7 +55,7 @@ def create_empty_raster(output_path, crs, bbox, resolution, raster_max_size=5000
 	'''
 
 
-
+	skip_logging = False
 	COARSE_RES = 10
 
 	# just some example values[9554.53441679047, 531538.6292625391, 443681.5898537142, 1129689.0494627843]
@@ -63,6 +63,7 @@ def create_empty_raster(output_path, crs, bbox, resolution, raster_max_size=5000
 	if resolution == "coarse":
 		avg_dist = (abs(bbox[0] - bbox[2]) + abs(bbox[1] - bbox[3]))/2
 		resolution = avg_dist/COARSE_RES
+		skip_logging = True
 
 	while True:
 		height, width, transform = get_raster_shapes(resolution, bbox, crs)
@@ -71,8 +72,9 @@ def create_empty_raster(output_path, crs, bbox, resolution, raster_max_size=5000
 		else:
 			resolution = resolution*2
 
-	logging.info("Resolution with which the analysis will be done set to: '{}' ".format(resolution))
-	logging.info("Raster size set to {}, {}".format(height, width))
+	if not skip_logging:
+		logging.info("Resolution with which the analysis will be done set to: '{}' ".format(resolution))
+		logging.info("Raster size set to {}, {}".format(height, width))
 	# Init raster with zeros.
 	data = np.zeros(shape=(height, width))
 
