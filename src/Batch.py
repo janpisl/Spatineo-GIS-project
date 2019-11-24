@@ -18,9 +18,12 @@ def run_batch(cfg):
 	get_capabilities_docs = cfg.get('data', 'get_capabilities')
 	output_dir = cfg.get('data', 'output_dir')
 	max_features = cfg.get('other', 'max_features_for_validation')
-	resolution = cfg.get('other', 'resolution')
+	resolution = cfg.get('result', 'resolution')
 	max_raster_size = cfg.get('other', 'max_raster_size')
-
+	try:
+		output_crs = cfg.get('result', 'output_crs')
+	except:
+		output_crs = None
 
 	for file_path in glob.glob(directory + '*.json'):
 		file = Path(file_path).stem
@@ -29,6 +32,7 @@ def run_batch(cfg):
 		config = configparser.ConfigParser()
 		config.add_section('data')
 		config.add_section('other')
+		config.add_section('result')
 
 		config.set('data', 'response_file', file_path)
 		config.set('data', 'get_capabilities', get_capabilities_docs + file.split("_")[0] + ".xml")
@@ -39,8 +43,11 @@ def run_batch(cfg):
 		config.set('data', 'binary_raster_output_path', output_dir + "bin_" + file + ".tif")
 		config.set('data', 'validation_raster_output_path', output_dir + "val_" + file + ".tif")
 		config.set('other', 'max_features_for_validation', max_features)
-		config.set('other', 'resolution', resolution)
+		config.set('result', 'resolution', resolution)
 		config.set('other', 'max_raster_size', max_raster_size)
+		if output_crs:
+			config.set('result', 'output_crs', output_crs)
+
 
 
 		process = Process(config)

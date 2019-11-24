@@ -26,7 +26,7 @@ class Process():
 		self.output_dir = cfg.get('data', 'output_dir')
 		cfg_resolution = int(cfg.get('result', 'resolution'))
 		try:
-			output_crs = cfg.get('result', 'crs')
+			output_crs = cfg.get('result', 'output_crs')
 		except:
 			output_crs = "EPSG:4326"
 		self.output_crs = CRS(output_crs)
