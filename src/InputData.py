@@ -64,7 +64,7 @@ def get_service_type(path_to_capabl):
 	return service
 
 
-def get_bboxes_as_geojson(layer_bbox, responses, crs, sample=False):
+def get_bboxes_as_geojson(layer_bbox, responses, crs, sample=False, flip_features=False):
 	''' This method converts response file to geojson geometries. imageAnalysisResult is included to the geojson features.
 	returns: list of geojson elements
 	'''
@@ -94,6 +94,11 @@ def get_bboxes_as_geojson(layer_bbox, responses, crs, sample=False):
 	logging.info("Creating geojson objects.")
 	for res in responses:
 		count += 1
+		# If in sampling mode, only process 1 out of 10 features
+		if sample is True:
+			if count % 10 != 0:
+				continue
+
 		if count % 1000 == 0:
 			logging.debug("Result no. {}".format(count))
 
@@ -131,7 +136,11 @@ def get_bboxes_as_geojson(layer_bbox, responses, crs, sample=False):
 
 
 		# Create a closed Polygon following the edges of the bbox.
-		g = Polygon([[(bbox[0], bbox[1]), (bbox[0], bbox[3]), (bbox[2], bbox[3]), (bbox[2], bbox[1]), (bbox[0], bbox[1])]])
+		if flip_features is True:
+			g = Polygon([[(bbox[1], bbox[0]), (bbox[3], bbox[0]), (bbox[3], bbox[2]), (bbox[1], bbox[2]), (bbox[1], bbox[0])]]) 
+		else:
+			g = Polygon([[(bbox[0], bbox[1]), (bbox[0], bbox[3]), (bbox[2], bbox[3]), (bbox[2], bbox[1]), (bbox[0], bbox[1])]])
+
 
 		# Save other data
 		props = {
@@ -141,27 +150,27 @@ def get_bboxes_as_geojson(layer_bbox, responses, crs, sample=False):
 		}
 		feat = Feature(geometry = g, properties = props)
 		
-		if sample:
-			if count % 10 == 0:
-				features.append(feat)
-		else:
-			features.append(feat)
+
+		features.append(feat)
 
 	if invalid_request_count > 0:
 		logging.info("Filtered {} requests away due to failed request.".format(invalid_request_count))
 
 	if bbox_out_count > 0:
-		logging.info("Filtered {} requests way because request bbox was not completely within layer bbox".format(bbox_out_count))
-	#TODO: this needs to be a square; now it isn't
+		logging.info("Filtered {} requests away because request bbox was not completely within layer bbox".format(bbox_out_count))
+
 	'''else:
 		self.bbox = coords_min + coords_max
 		logging.info("Bounding box set to the extent of all requests to {}".format(self.bbox))'''
 
+	features_flipped = False
+
+	# TODO: this is an ugly hack 
 	if len(features) == 0:
 		logging.warning("No features found within layer bounding box. Trying again with different axis order.")
-		features = get_bboxes_as_geojson(change_bbox_axis_order(layer_bbox), responses, crs, sample=sample)
+		features, features_flipped = get_bboxes_as_geojson(layer_bbox, responses, crs, sample=sample, flip_features = True)
+		features_flipped = True
 	
-
 	feat_c = FeatureCollection(features)
 	
-	return feat_c
+	return feat_c, features_flipped
