@@ -157,6 +157,11 @@ def get_bboxes_as_geojson(layer_bbox, responses, crs, sample=False):
 		self.bbox = coords_min + coords_max
 		logging.info("Bounding box set to the extent of all requests to {}".format(self.bbox))'''
 
+	if len(features) == 0:
+		logging.warning("No features found within layer bounding box. Trying again with different axis order.")
+		features = get_bboxes_as_geojson(change_bbox_axis_order(layer_bbox), responses, crs, sample=sample)
+	
+
 	feat_c = FeatureCollection(features)
 	
 	return feat_c

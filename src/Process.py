@@ -76,20 +76,24 @@ class Process():
 		self.layer_bbox = get_layer_bbox(capabilities_path, self.layer_name, self.crs, self.service_type)
 
 		#uses only 1/10 for bbox shrinking 
-		self.features_sample = get_bboxes_as_geojson(self.layer_bbox, self.responses, self.crs, sample = True)
+		self.features_sample = get_bboxes_as_geojson(self.layer_bbox, self.responses, self.crs, sample = False)
 
 		self.coarse_raster = create_empty_raster(self.output_dir + "/" + "tmp_coarse.tif", 
 			self.crs, self.layer_bbox, resolution="coarse", max_raster_size=self.max_raster_size)
 
-		#TODO: set threshold based on observations!!
+		#TODO: set threshold based on observations!
 		self.bbox = self.shrink_bbox(self.coarse_raster,self.features_sample)
 		logging.info("layer bbox: {}".format(self.layer_bbox))
 		logging.info("shrinked bbox: {}".format(self.bbox))
-
-		# If shrinked bbox is larger or equal to original, use original
+		# If shrinked bbox isn't smaller than original, use original
 		if (self.layer_bbox[3]-self.layer_bbox[1]) <= (self.bbox[3]-self.bbox[1]) and (self.layer_bbox[2]-self.layer_bbox[0]) <= (self.bbox[2]-self.bbox[0]):
 			self.bbox = self.layer_bbox
-			logging.info("Bounding box from get_capabilities is being used.")
+		else:
+			logging.info("Bounding box based on spatial distribution of requests is being used.")
+
+
+		
+
 
 
 		## END
@@ -103,7 +107,6 @@ class Process():
 
 
 	def shrink_bbox(self,coarse_raster,features):
-
 		eval_raster, norm_raster, request_counter = compute_density_rasters(features, coarse_raster)
 
 		#do not compare against request_counter but np.sum(norm_raster) because that doesnt include invalid requests
