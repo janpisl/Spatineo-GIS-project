@@ -55,9 +55,8 @@ class Process():
 		self.responses = self.responses_file['results']
 
 		self.layer_name = self.responses_header['layerName']
-		raw_crs =  self.responses_header['crs']
 
-		self.crs = CRS(raw_crs)
+		self.crs = CRS(self.responses_header['crs'])
 		self.resolution = get_resolution(self.crs, cfg_resolution)
 
 		self.service_type = get_service_type(capabilities_path)
@@ -76,11 +75,12 @@ class Process():
 		self.layer_bbox = get_layer_bbox(capabilities_path, self.layer_name, self.crs, self.service_type)
 
 		#uses only 1/10 for bbox shrinking 
-		self.features_sample = get_bboxes_as_geojson(self.layer_bbox, self.responses, self.crs, sample = False)
+		self.features_sample, self.flip_features = get_bboxes_as_geojson(self.layer_bbox, self.responses, self.crs, sample = False)
 
 		self.coarse_raster = create_empty_raster(self.output_dir + "/" + "tmp_coarse.tif", 
 			self.crs, self.layer_bbox, resolution="coarse", max_raster_size=self.max_raster_size)
 
+		'''
 		#TODO: set threshold based on observations!
 		self.bbox = self.shrink_bbox(self.coarse_raster,self.features_sample)
 		logging.info("layer bbox: {}".format(self.layer_bbox))
@@ -90,18 +90,12 @@ class Process():
 			self.bbox = self.layer_bbox
 		else:
 			logging.info("Bounding box based on spatial distribution of requests is being used.")
-
-
-		
-
-
-
 		## END
+		'''
+		self.bbox = self.layer_bbox
 
-		#until self.bbox is fixed, use layer_bbox as usual
-		#self.features = get_bboxes_as_geojson(self.bbox, self.responses, self.crs)
 
-		self.features = get_bboxes_as_geojson(self.bbox, self.responses, self.crs)
+		self.features = get_bboxes_as_geojson(self.bbox, self.responses, self.crs, flip_features=self.flip_features)[0]
 		self.raster = create_empty_raster(self.output_dir + "/" + "tmp.tif" , self.crs, self.bbox, self.resolution, max_raster_size=self.max_raster_size)
 
 
@@ -151,4 +145,4 @@ if __name__ == '__main__':
 	# validation of the result. 
 	validate(process.url, process.layer_name, process.crs.crs_code, 
 				process.layer_bbox, process.bin_raster_path, process.val_raster_output_path, 
-				process.service_type, process.service_version, process.max_features_for_validation)
+				process.service_type, process.service_version, process.max_features_for_validation, process.flip_features)
