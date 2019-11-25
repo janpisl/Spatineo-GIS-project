@@ -9,8 +9,8 @@ import argparse
 import requests
 from PIL import Image
 import io
-# from Capabilities import Capabilities
-
+import os
+import csv
 import logging
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
 import datetime
@@ -27,6 +27,28 @@ raster_to_validate = /Users/juhohanninen/spatineo/result_out44.tif
 validation_file = /Users/juhohanninen/spatineo/validation.tif
 '''
 #"url": "http://paikkatieto.ymparisto.fi/arcgis/services/INSPIRE/SYKE_Hydrografia/MapServer/WmsServer?VERSION=1.3.0&SERVICE=WMS&REQUEST=GetMap&LAYERS=HY.Network.WatercourseLink&STYLES=&CRS=EPSG:3067&BBOX=353484.39290249243,6952336.504877807,515662.8104318712,7114514.922407186&WIDTH=256&HEIGHT=256&FORMAT=image/png&EXCEPTIONS=XML"
+
+
+def write_statistics(output_path, layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels):
+
+	stats_path = os.path.split(output_path)[0] + "/stats_" + datetime.datetime.now().strftime("%d.%b_%Y") + ".csv"
+
+	if not os.path.isfile(stats_path):
+		with open(stats_path, "w") as stats_file:
+			headers = ["Layer name", "Pixel count", "Correct", "False positives", "False negatives"]
+			row = [layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels]
+			writer = csv.writer(stats_file)
+			writer.writerow(headers)
+			writer.writerow(row)
+
+	else:
+		with open(stats_path, "a") as stats_file:
+			row = [layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels]
+			writer = csv.writer(stats_file)
+			writer.writerow(row)
+
+	logging.info("Statistics written to {}".format(stats_path))
+
 
 
 def test_pixel(image):
@@ -58,6 +80,7 @@ def test_for_var(image):
 
 def validate_WMS(url, layer_name, srs, bbox, result_array, output_path, service_version):
 	
+
 	#TODO: set height & width to higher values so more features are rendered? what values does Spatineo use?? 
 	#TODO: properly deal with service_version == None
 	if service_version is None:
@@ -170,12 +193,15 @@ def validate_WFS(url, layer_name, srs, bbox, result_file, output_path, service_v
 
 
 
-def validate(url, layer_name, srs, bbox, result_path, output_path, service_type, service_version, max_features_for_validation):
+def validate(url, layer_name, srs, bbox, result_path, output_path, service_type, service_version, max_features_for_validation, flip_features):
 
 	#self.service_type = Capabilities._get_service()
 	logging.info("validation starts at {}".format(datetime.datetime.now()))
 	# Open the file to be validated
 	file = rasterio.open(result_path)
+
+	if flip_features:
+		bbox = [bbox[1], bbox[0], bbox[3], bbox[2]]
 
 	# change bbox from a list into a string, remove spaces and brackets
 	bbox_str = ''.join(char for char in str(bbox) if char not in '[]() ')
@@ -208,21 +234,32 @@ def validate(url, layer_name, srs, bbox, result_path, output_path, service_type,
 		transform=file.transform
 	)
 
+
+
 	output.write(comparison, 1)
 	output.close()
 	logging.info("Statistics:")
 	logging.info("This is the np.unique count: {}".format(np.unique(comparison, return_counts = True)[1]))
-
+	pixels_count = np.size(comparison)
+	correct_pixels = None
+	false_neg_pixels = None
+	false_pos_pixels = None
 	for i in range(len(np.unique(comparison, return_counts = True)[0])):
 		if np.unique(comparison, return_counts = True)[0][i] == 0:
-			logging.info("Correct: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][i]/np.size(comparison))))
+			correct_pixels = np.unique(comparison, return_counts = True)[1][i]
+			logging.info("Correct: {}%".format(round(100*correct_pixels/pixels_count)))
 		elif np.unique(comparison, return_counts = True)[0][i] == 1:
-			logging.info("False positives: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][i]/np.size(comparison))))
+			false_pos_pixels = np.unique(comparison, return_counts = True)[1][i]
+			logging.info("False positives: {}%".format(round(100*false_pos_pixels/pixels_count)))
 		# this is supposed to be -1 but since uint8 is 0 to 255 it underflows and makes it 255	
 		elif np.unique(comparison, return_counts = True)[0][i] == 255:
-			logging.info("False negatives: {}%".format(round(100*np.unique(comparison, return_counts = True)[1][i]/np.size(comparison))))		
+			false_neg_pixels = np.unique(comparison, return_counts = True)[1][i]
+			logging.info("False negatives: {}%".format(round(100*false_neg_pixels/pixels_count)))		
 		else:
 			raise Exception("Unexpected values in the validation raster: {}".format(np.unique(comparison, return_counts = True)[0]))
+
+
+	write_statistics(output_path, layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels)
 
 
 	return 0
