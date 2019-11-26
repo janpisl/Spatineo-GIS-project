@@ -1,4 +1,4 @@
-from shapely.geometry import shape, mapping
+from shapely.geometry import shape, mapping, MultiPolygon
 from shapely.ops import transform as shapely_transform, cascaded_union # TODO: check naming if it overlapping or not to variables of this file?
 import rasterio
 from rasterio.features import shapes
@@ -98,15 +98,15 @@ def create_empty_raster(output_path, crs, bbox, resolution, max_raster_size, dri
 	return output_path
 		
 
-def convert_to_gpkg(crs, output_dir, resolution, input_file, output_crs=None):
+def convert_to_vector_format(crs, output_dir, resolution, input_file, output_crs):
 	# Create layer name based on the raster file name
 	dst_layername = input_file.split('/')[-1].split('.')[0]
 	
 	with rasterio.open(input_file, driver= 'GTiff', mode='r') as src:
 		image = src.read(1)
 		
-		# Create 1 pixel buffer around areas to smooth output.
-		smoothed = scipy.ndimage.percentile_filter(image, 70, (5,5))
+		# Smooth output with median filter. TODO: Make take kernel size somehow from resolution
+		smoothed = scipy.ndimage.median_filter(image, (10,10), mode='constant')
 
 		# Mask value is 1, which means data
 		mask = smoothed == 1
@@ -115,7 +115,7 @@ def convert_to_gpkg(crs, output_dir, resolution, input_file, output_crs=None):
 		tol = resolution
 		
 		if crs != output_crs:
-			tr = Transformer.from_crs(crs, output_crs, always_xy=True).transform
+			tr = Transformer.from_crs(crs, output_crs, always_xy=is_first_axis_east(output_crs)).transform
 		else:
 			tr = None
 
@@ -127,15 +127,13 @@ def convert_to_gpkg(crs, output_dir, resolution, input_file, output_crs=None):
 				shp = shapely_transform(tr, shp)
 			feats.append(shp)
 
-		# Create multipolygon if necessary
-		geom = cascaded_union(feats)
-
-		results = ({'geometry': mapping(g), 'properties': {}} for g in [geom])
+		feature = MultiPolygon(feats)
+		result = {'geometry': mapping(feature), 'properties': {'resolution': resolution }} # TODO: The resolution is not the same than used!
 
 	with fiona.open(
 			output_dir + dst_layername + ".geojson" , 'w', 
 			driver="GeoJSON",
 			crs=fiona.crs.from_string(output_crs.to_proj4()) if output_crs else src.crs,
-			schema={'geometry': geom.type, 'properties': {}}) as dst:
-		dst.writerecords(results)
+			schema={'geometry': feature.type, 'properties': {'resolution': 'int'}}) as dst:
+		dst.write(result)
 

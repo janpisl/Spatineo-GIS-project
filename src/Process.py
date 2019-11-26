@@ -14,8 +14,8 @@ logging.basicConfig(filename="../../output_data/logs/" + datetime.datetime.now()
 from Algorithm import solve, compute_density_rasters
 from Validate import validate
 from InputData import get_resolution, get_service_type, get_bboxes_as_geojson
-from ResultData import create_empty_raster, convert_to_gpkg
-from Projection import CRS
+from ResultData import create_empty_raster, convert_to_vector_format
+from Projection import CRS, solve_first_axis_direction
 from Capabilities import get_layer_bbox
 
 class Process():
@@ -24,12 +24,6 @@ class Process():
 		response_file_path = cfg.get('data', 'response_file')
 		capabilities_path = cfg.get('data', 'get_capabilities')
 		self.output_dir = cfg.get('data', 'output_dir')
-		cfg_resolution = int(cfg.get('result', 'resolution'))
-		try:
-			output_crs = cfg.get('result', 'output_crs')
-		except:
-			output_crs = "EPSG:4326"
-		self.output_crs = CRS(output_crs)
 		file = response_file_path.split('/')[-1].split('.')[0]
 
 		try:
@@ -56,14 +50,25 @@ class Process():
 
 		self.layer_name = self.responses_header['layerName']
 
-		self.crs = CRS(self.responses_header['crs'])
-		self.resolution = get_resolution(self.crs, cfg_resolution)
-
 		self.service_type = get_service_type(capabilities_path)
 		try:
 			self.service_version = self.responses[0]['url'].split("VERSION=")[1].split("&")[0]
 		except:
 			self.service_version = None
+
+		# CRS parsing
+		input_crs =  self.responses_header['crs']
+		input_axis_dir = cfg.get('input', 'first_axis_direction')
+		if input_axis_dir not in ('east', 'north', 'epsg'):
+			input_axis_dir = solve_first_axis_direction(self.service_type, self.service_version, input_crs)
+		self.crs = CRS(self.responses_header['crs'], input_axis_dir)
+
+		output_crs = cfg.get('result', 'output_crs')
+		output_axis_dir = cfg.get('result', 'first_axis_direction')
+		self.output_crs = CRS(output_crs, output_axis_dir)
+
+		cfg_resolution = int(cfg.get('result', 'resolution'))
+		self.resolution = get_resolution(self.crs, cfg_resolution)
 
 		#TODO: delete one of these two
 		self.request_url = self.responses[0]['url'].split("?")[0]
@@ -124,7 +129,7 @@ class Process():
 		#a = Algorithm(self.raster, self.input_data, self.service_type, self.result)
 
 		solve(self.features, self.raster, self.output_raster_path, self.bin_raster_path)
-		convert_to_gpkg(self.crs, self.output_dir, self.resolution, self.bin_raster_path, self.output_crs)
+		convert_to_vector_format(self.crs, self.output_dir, self.resolution, self.bin_raster_path, self.output_crs)
 
 
 if __name__ == '__main__':
