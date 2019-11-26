@@ -246,7 +246,7 @@ def validate(url, layer_name, srs, bbox, result_path, output_path, service_type,
 	output.write(comparison, 1)
 	output.close()
 	logging.info("Statistics:")
-	logging.info("This is the np.unique count: {}".format(np.unique(comparison, return_counts = True)[1]))
+	logging.info("This is the np.unique count: {}".format(np.unique(comparison, return_counts = True)))
 	pixels_count = np.size(comparison)
 	correct_pixels = None
 	false_neg_pixels = None

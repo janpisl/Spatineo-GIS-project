@@ -81,11 +81,11 @@ class Process():
 
 		#uses only 1/10 for bbox shrinking 
 		self.features_sample, self.flip_features = get_bboxes_as_geojson(self.layer_bbox, self.responses, self.crs, sample = False)
-
+		
+		'''
 		self.coarse_raster = create_empty_raster(self.output_dir + "/" + "tmp_coarse.tif", 
 			self.crs, self.layer_bbox, resolution="coarse", max_raster_size=self.max_raster_size)
 
-		'''
 		#TODO: set threshold based on observations!
 		self.bbox = self.shrink_bbox(self.coarse_raster,self.features_sample)
 		logging.info("layer bbox: {}".format(self.layer_bbox))
