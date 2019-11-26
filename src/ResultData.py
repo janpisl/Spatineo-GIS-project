@@ -121,11 +121,14 @@ def convert_to_vector_format(crs, output_dir, resolution, input_file, output_crs
 
 		# Transformation and convertion from shapely shape to geojson-like object for fiona.
 		feats = []
+		feats_original_crs = []
 		for (s,v) in shapes(smoothed, mask=mask, transform=src.transform):
 			shp = shape(s).simplify(tol)
+			feats_original_crs.append(shp)
 			if tr:
 				shp = shapely_transform(tr, shp)
 			feats.append(shp)
+
 
 		feature = MultiPolygon(feats)
 		result = {'geometry': mapping(feature), 'properties': {'resolution': resolution }} # TODO: The resolution is not the same than used!
@@ -137,3 +140,4 @@ def convert_to_vector_format(crs, output_dir, resolution, input_file, output_crs
 			schema={'geometry': feature.type, 'properties': {'resolution': 'int'}}) as dst:
 		dst.write(result)
 
+	return MultiPolygon(feats_original_crs).bounds

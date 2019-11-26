@@ -29,25 +29,36 @@ validation_file = /Users/juhohanninen/spatineo/validation.tif
 #"url": "http://paikkatieto.ymparisto.fi/arcgis/services/INSPIRE/SYKE_Hydrografia/MapServer/WmsServer?VERSION=1.3.0&SERVICE=WMS&REQUEST=GetMap&LAYERS=HY.Network.WatercourseLink&STYLES=&CRS=EPSG:3067&BBOX=353484.39290249243,6952336.504877807,515662.8104318712,7114514.922407186&WIDTH=256&HEIGHT=256&FORMAT=image/png&EXCEPTIONS=XML"
 
 
-def write_statistics(output_path, layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels):
+
+
+
+def write_statistics(output_path, layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels, bbox_area_decrease):
 
 	stats_path = os.path.split(output_path)[0] + "/stats_" + datetime.datetime.now().strftime("%d.%b_%Y") + ".csv"
 
 	if not os.path.isfile(stats_path):
 		with open(stats_path, "w") as stats_file:
-			headers = ["Layer name", "Pixel count", "Correct", "False positives", "False negatives"]
-			row = [layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels]
+			headers = ["Layer name", "Pixel count", "Correct", "False positives", "False negatives", "Area of new bounding box in %% of original"]
+			row = [layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels, bbox_area_decrease]
 			writer = csv.writer(stats_file)
 			writer.writerow(headers)
 			writer.writerow(row)
 
 	else:
 		with open(stats_path, "a") as stats_file:
-			row = [layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels]
+			row = [layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels, bbox_area_decrease]
 			writer = csv.writer(stats_file)
 			writer.writerow(row)
 
 	logging.info("Statistics written to {}".format(stats_path))
+
+
+def area_decrease(bbox, data_bounds):
+	x_decr = (data_bounds[2] - data_bounds[0])/(bbox[2] - bbox[0])
+	y_decr = (data_bounds[3] - data_bounds[1])/(bbox[3] - bbox[1])
+	
+	return x_decr*y_decr*100
+
 
 
 
@@ -200,7 +211,7 @@ def validate_WFS(url, layer_name, srs, bbox, result_file, output_path, service_v
 
 
 
-def validate(url, layer_name, srs, bbox, result_path, output_path, service_type, service_version, max_features_for_validation, flip_features):
+def validate(url, layer_name, srs, bbox, result_path, output_path, service_type, service_version, max_features_for_validation, flip_features, data_bounds):
 
 	#self.service_type = Capabilities._get_service()
 	logging.info("validation starts at {}".format(datetime.datetime.now()))
@@ -265,8 +276,11 @@ def validate(url, layer_name, srs, bbox, result_path, output_path, service_type,
 		else:
 			raise Exception("Unexpected values in the validation raster: {}".format(np.unique(comparison, return_counts = True)[0]))
 
+	bbox_area_decrease = area_decrease(bbox, data_bounds)
 
-	write_statistics(output_path, layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels)
+	import pdb
+	pdb.set_trace()
+	write_statistics(output_path, layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels, bbox_area_decrease)
 
 
 	return 0
