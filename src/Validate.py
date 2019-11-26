@@ -52,24 +52,31 @@ def write_statistics(output_path, layer_name, pixels_count, correct_pixels, fals
 
 
 def test_pixel(image):
+	uniques = np.unique(image)
+	if len(uniques) == 1 and uniques[0] == 0:
+		return False
+	else:
+		return True
 
-	for i in range(image.shape[0]):
+	'''for i in range(image.shape[0]):
 		for j in range(image.shape[1]):
 			try:
 				if not np.array_equal(image[i][j], first_val):
 					return True
 			except UnboundLocalError:
 				first_val = image[i][j]
-	
-	return False
+
+	return False'''
 
 def test_for_var(image):
 
 	data_grid = np.empty([3,3])
-	size = round(image.shape[0]/data_grid.shape[0])
+	size_x = round(image.shape[0]/data_grid.shape[0])
+	size_y = round(image.shape[1]/data_grid.shape[1])
+
 	for m in range(3):
 		for k in range(3):
-			image_subset = image[m*size:(m+1)*size,k*size:(k+1)*size]
+			image_subset = image[m*size_x:(m+1)*size_x,k*size_y:(k+1)*size_y]
 
 			#image_subset = image[m*size:(m+1)*size,k*size:(k+1)*size,:]
 			data_grid[m][k] = test_pixel(image_subset)
@@ -218,8 +225,8 @@ def validate(url, layer_name, srs, bbox, result_path, output_path, service_type,
 		logging.warning("Validation not successful. *feeling embarassed*")
 		return -1
 
-	# Since result is binary, the comparison is 0 if some value was the same.
-	# 1 if we got false negative and -1 if we got false positive.
+	# Since result is binary, the comparison is 0 if a value was the same.
+	# 1 if we got false positive and -1 (i.e. 255 in uint8) if we got false negative.
 	comparison = result - real_data
 	output = rasterio.open(
 		output_path,
