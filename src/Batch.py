@@ -32,6 +32,7 @@ def run_batch(cfg):
 		config.add_section('data')
 		config.add_section('other')
 		config.add_section('result')
+		config.add_section('input')
 
 		config.set('data', 'response_file', file_path)
 		config.set('data', 'get_capabilities', get_capabilities_docs + file.split("_")[0] + ".xml")
