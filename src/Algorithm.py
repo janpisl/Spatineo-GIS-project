@@ -23,6 +23,7 @@ def compute_density_rasters(features, empty_raster):
 	open_raster = rasterio.open(empty_raster)
 	eval_raster = open_raster.read()
 	norm_raster = np.copy(eval_raster)
+	pos_raster = np.copy(eval_raster)
 	request_counter = 0
 	logging.info("Iterating through geojson objects...")
 
@@ -36,6 +37,7 @@ def compute_density_rasters(features, empty_raster):
 		props = feat['properties']
 		if props['imageAnalysisResult'] == 1:
 			norm_raster[0][mask] += 1
+			pos_raster[0][mask] += 1
 		elif (props['imageAnalysisResult'] == 0 or props['imageAnalysisResult'] == -1):
 			norm_raster[0][mask] += 1
 			eval_raster[0][mask] += 1
@@ -44,16 +46,20 @@ def compute_density_rasters(features, empty_raster):
 			logging.warning(feat)
 
 
-	return eval_raster, norm_raster, request_counter
+	return eval_raster, pos_raster, norm_raster, request_counter
 
 def solve(features, empty_raster, output_path, bin_output_path):
-
-	eval_raster, norm_raster, request_counter = compute_density_rasters(features, empty_raster)
+	eval_raster, pos_raster, norm_raster, request_counter = compute_density_rasters(features, empty_raster)
 	open_raster = rasterio.open(empty_raster)
 	nd = open_raster.nodata
-
+	
 	eval_raster = np.divide(eval_raster, norm_raster, out=np.zeros_like(eval_raster), where=norm_raster != 0)
-	zero_mask = norm_raster[0] == 0
+
+	# Filter out results with no requests and no positive requests.
+	zero_mask_norm = norm_raster[0] == 0
+	zero_mask_pos = pos_raster[0] == 0
+	zero_mask = zero_mask_norm and zero_mask_pos
+
 	logging.info("there was {} requests included in the analysis".format(request_counter))
 	# Save the image into disk.     
 	img_output = rasterio.open(

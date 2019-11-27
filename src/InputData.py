@@ -85,8 +85,11 @@ def get_bboxes_as_geojson(layer_bbox, responses, crs, sample=False, flip_feature
 
 	invalid_request_count = 0
 	bbox_out_count = 0
+	big_area_count = 0
 
 	count = 0
+
+	area_extent = (extent[2] - extent[0]) * (extent[3] - extent[1])
 
 	coords_min = [float('inf'),float('inf')]
 	coords_max = [float('-inf'),float('-inf')]
@@ -133,7 +136,11 @@ def get_bboxes_as_geojson(layer_bbox, responses, crs, sample=False, flip_feature
 				if bbox[i + len(coords_max)] > coords_max[i]:
 					coords_max[i] = bbox[i  + len(coords_max)]
 		'''
+		area_bbox = (bbox[2] - bbox[0]) * (bbox[3] - bbox[1])
 
+		if area_bbox > 0.1 * area_extent and res['imageAnalysisResult'] == 1: # TODO: Find meaningful coefficient for area.
+			big_area_count += 1
+			continue
 
 		# Create a closed Polygon following the edges of the bbox.
 		if flip_features is True:
@@ -158,6 +165,9 @@ def get_bboxes_as_geojson(layer_bbox, responses, crs, sample=False, flip_feature
 
 	if bbox_out_count > 0:
 		logging.info("Filtered {} requests away because request bbox was not completely within layer bbox".format(bbox_out_count))
+
+	if big_area_count > 0:
+		logging.info("Filtered {} positive requests away due to large bbox.".format(invalid_request_count))
 
 	'''else:
 		self.bbox = coords_min + coords_max
