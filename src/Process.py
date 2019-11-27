@@ -28,13 +28,16 @@ class Process():
 
 		try:
 			self.output_raster_path = cfg.get('data', 'raster_output_path')
+		except:
+			self.output_raster_path = self.output_dir + file + ".tif"			
+		try:	
 			self.bin_raster_path = cfg.get('data', 'binary_raster_output_path')
+		except:	
+			self.bin_raster_path = self.output_dir + "bin_" + file + ".tif"
+		try:
 			self.val_raster_output_path = cfg.get('data', 'validation_raster_output_path')
 		except:
-			self.output_raster_path = self.output_dir + file + ".tif"
-			self.bin_raster_path = self.output_dir + "bin_" + file + ".tif"
 			self.val_raster_output_path = self.output_dir + "val_" + file + ".tif"
-
 		try:
 			self.max_features_for_validation = int(cfg.get('other', 'max_features_for_validation'))
 		except:
@@ -81,11 +84,11 @@ class Process():
 
 		#uses only 1/10 for bbox shrinking 
 		self.features_sample, self.flip_features = get_bboxes_as_geojson(self.layer_bbox, self.responses, self.crs, sample = False)
-
+		
+		'''
 		self.coarse_raster = create_empty_raster(self.output_dir + "/" + "tmp_coarse.tif", 
 			self.crs, self.layer_bbox, resolution="coarse", max_raster_size=self.max_raster_size)
 
-		'''
 		#TODO: set threshold based on observations!
 		self.bbox = self.shrink_bbox(self.coarse_raster,self.features_sample)
 		logging.info("layer bbox: {}".format(self.layer_bbox))
@@ -129,7 +132,7 @@ class Process():
 		#a = Algorithm(self.raster, self.input_data, self.service_type, self.result)
 
 		solve(self.features, self.raster, self.output_raster_path, self.bin_raster_path)
-		convert_to_vector_format(self.crs, self.output_dir, self.resolution, self.bin_raster_path, self.output_crs)
+		self.data_bounds = convert_to_vector_format(self.crs, self.output_dir, self.resolution, self.bin_raster_path, self.output_crs)
 
 
 if __name__ == '__main__':
@@ -150,4 +153,5 @@ if __name__ == '__main__':
 	# validation of the result. 
 	validate(process.url, process.layer_name, process.crs.crs_code, 
 				process.layer_bbox, process.bin_raster_path, process.val_raster_output_path, 
-				process.service_type, process.service_version, process.max_features_for_validation, process.flip_features)
+				process.service_type, process.service_version, process.max_features_for_validation, 
+				process.flip_features, process.data_bounds)

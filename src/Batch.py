@@ -32,6 +32,7 @@ def run_batch(cfg):
 		config.add_section('data')
 		config.add_section('other')
 		config.add_section('result')
+		config.add_section('input')
 
 		config.set('data', 'response_file', file_path)
 		config.set('data', 'get_capabilities', get_capabilities_docs + file.split("_")[0] + ".xml")
@@ -55,7 +56,8 @@ def run_batch(cfg):
 		# validation of the result. 
 		validate(process.url, process.layer_name, process.crs.crs_code, 
 					process.layer_bbox, process.bin_raster_path, process.val_raster_output_path, 
-					process.service_type, process.service_version, process.max_features_for_validation, process.flip_features)
+					process.service_type, process.service_version, process.max_features_for_validation,
+					process.flip_features, process.data_bounds)
 
 		logging.info("file {} done \n \n".format(file))
 

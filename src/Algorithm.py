@@ -40,7 +40,7 @@ def compute_density_rasters(features, empty_raster):
 			pos_raster[0][mask] += 1
 		elif (props['imageAnalysisResult'] == 0 or props['imageAnalysisResult'] == -1):
 			norm_raster[0][mask] += 1
-			eval_raster[0][mask] += 1
+			eval_raster[0][mask] -= 1
 		else:
 			logging.warning("unexpected imageTestResult value: {}".format(props['imageAnalysisResult']))
 			logging.warning(feat)
@@ -61,6 +61,7 @@ def solve(features, empty_raster, output_path, bin_output_path):
 	zero_mask = zero_mask_norm and zero_mask_pos
 
 	logging.info("there was {} requests included in the analysis".format(request_counter))
+	'''this is only for testing purposes
 	# Save the image into disk.     
 	img_output = rasterio.open(
 		"../../output_data/35_norm_raster.tif",
@@ -74,14 +75,15 @@ def solve(features, empty_raster, output_path, bin_output_path):
 		crs=open_raster.crs,
 		transform=open_raster.transform)   
 	img_output.write(norm_raster)
-	img_output.close()
+	img_output.close()'''
+	
 	logging.info("request_counter: {}".format(request_counter))
 	logging.debug("norm average: ",np.average(norm_raster))
 
 	magic_constant = 0.1
 	threshold = np.average(eval_raster)*magic_constant
 	logging.debug("threshold is: {}".format(threshold))
-	binary_raster = eval_raster < threshold
+	binary_raster = eval_raster > threshold
 	binary_raster[0][zero_mask] = False
 
 	# Save the image into disk.        

@@ -40,7 +40,7 @@ class CRS(pyproj.CRS):
 		try:
 			super().__init__(crs_code)
 		except pyproj.exceptions.CRSError:
-			assert crs_code == "CRS:84", "there is another crs code that pyproj.CRS cannot handle (apart from CRS:84): '{}'".format(crs_code)
+			assert crs_code == "CRS:84", "There is another crs code that pyproj.CRS cannot handle (apart from CRS:84): '{}'".format(crs_code)
 			super().__init__("EPSG:4326")
 			self.first_axis_dir = 'east'
 
