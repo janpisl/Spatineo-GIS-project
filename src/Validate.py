@@ -1,5 +1,4 @@
 from osgeo import ogr, osr, gdal
-from owslib.wms import WebMapService
 import rasterio.features
 import geojson
 import numpy as np
@@ -54,6 +53,9 @@ def write_statistics(output_path, layer_name, pixels_count, correct_pixels, fals
 
 
 def area_decrease(bbox, data_bounds):
+	if len(data_bounds) == 0:
+		# No bounds means no data found -> 100% decrease
+		return 100
 	x_decr = (data_bounds[2] - data_bounds[0])/(bbox[2] - bbox[0])
 	y_decr = (data_bounds[3] - data_bounds[1])/(bbox[3] - bbox[1])
 	
@@ -278,8 +280,6 @@ def validate(url, layer_name, srs, bbox, result_path, output_path, service_type,
 
 	bbox_area_decrease = area_decrease(bbox, data_bounds)
 
-	import pdb
-	pdb.set_trace()
 	write_statistics(output_path, layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels, bbox_area_decrease)
 
 
