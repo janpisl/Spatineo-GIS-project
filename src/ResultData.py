@@ -6,7 +6,7 @@ import fiona
 import fiona.crs
 import numpy as np
 import scipy.ndimage
-from math import floor, ceil
+from math import floor, ceil, log10
 # from osgeo import gdal, ogr
 # import sys
 from pyproj import Transformer
@@ -95,7 +95,7 @@ def create_empty_raster(output_path, crs, bbox, resolution, max_raster_size, dri
 	dataset.write(data, 1)
 	dataset.close()
 
-	return output_path
+	return output_path, resolution
 		
 
 def convert_to_vector_format(crs, output_dir, resolution, input_file, output_crs, url, layer_name):
@@ -104,15 +104,19 @@ def convert_to_vector_format(crs, output_dir, resolution, input_file, output_crs
 	
 	with rasterio.open(input_file, driver= 'GTiff', mode='r') as src:
 		image = src.read(1)
-		
-		# Smooth output with median filter. TODO: Make take kernel size somehow from resolution
-		smoothed = scipy.ndimage.median_filter(image, (10,10), mode='constant')
 
+		# Smooth output with median filter.
+		smooth_kernel_size = round(min(image.shape) / 30) # TODO: Move experimental this factor to config?
+		if smooth_kernel_size > 1:
+			pixels = scipy.ndimage.median_filter(image, (smooth_kernel_size,smooth_kernel_size), mode='constant')
+		else:
+			pixels = image
+		
 		# Mask value is 1, which means data
-		mask = smoothed == 1
+		mask = pixels == 1
 
 		# Tolerance for douglas peucker simplification
-		tol = resolution
+		tol = 100 * log10(resolution)
 		
 		if crs != output_crs:
 			tr = Transformer.from_crs(crs, output_crs, always_xy=is_first_axis_east(output_crs)).transform
@@ -122,7 +126,7 @@ def convert_to_vector_format(crs, output_dir, resolution, input_file, output_crs
 		# Transformation and convertion from shapely shape to geojson-like object for fiona.
 		feats = []
 		feats_original_crs = []
-		for (s,v) in shapes(smoothed, mask=mask, transform=src.transform):
+		for (s,v) in shapes(pixels, mask=mask, transform=src.transform):
 			shp = shape(s).simplify(tol)
 			feats_original_crs.append(shp)
 			if tr:
@@ -139,6 +143,7 @@ def convert_to_vector_format(crs, output_dir, resolution, input_file, output_crs
 			crs=fiona.crs.from_string(output_crs.to_proj4()) if output_crs else src.crs,
 			schema={'geometry': feature.type, 'properties': {'resolution': 'int', 'url': 'str', 'layer_name': 'str'}},
 			VALIDATE_OPEN_OPTIONS=False) as dst:
-		dst.write(result)
+		if len(feats) > 0:
+			dst.write(result)
 
 	return MultiPolygon(feats_original_crs).bounds

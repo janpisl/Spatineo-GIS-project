@@ -104,7 +104,7 @@ class Process():
 
 
 		self.features = get_bboxes_as_geojson(self.bbox, self.responses, self.crs, flip_features=self.flip_features)[0]
-		self.raster = create_empty_raster(self.output_dir + "/" + "tmp.tif" , self.crs, self.bbox, self.resolution, max_raster_size=self.max_raster_size)
+		self.raster, self.resolution = create_empty_raster(self.output_dir + "/" + "tmp.tif" , self.crs, self.bbox, self.resolution, max_raster_size=self.max_raster_size)
 
 
 
