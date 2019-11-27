@@ -132,7 +132,7 @@ class Process():
 		#a = Algorithm(self.raster, self.input_data, self.service_type, self.result)
 
 		solve(self.features, self.raster, self.output_raster_path, self.bin_raster_path)
-		self.data_bounds = convert_to_vector_format(self.crs, self.output_dir, self.resolution, self.bin_raster_path, self.output_crs)
+		self.data_bounds = convert_to_vector_format(self.crs, self.output_dir, self.resolution, self.bin_raster_path, self.output_crs, self.url, self.layer_name)
 
 
 if __name__ == '__main__':

@@ -98,7 +98,7 @@ def create_empty_raster(output_path, crs, bbox, resolution, max_raster_size, dri
 	return output_path
 		
 
-def convert_to_vector_format(crs, output_dir, resolution, input_file, output_crs):
+def convert_to_vector_format(crs, output_dir, resolution, input_file, output_crs, url, layer_name):
 	# Create layer name based on the raster file name
 	dst_layername = input_file.split('/')[-1].split('.')[0]
 	
@@ -131,13 +131,14 @@ def convert_to_vector_format(crs, output_dir, resolution, input_file, output_crs
 
 
 		feature = MultiPolygon(feats)
-		result = {'geometry': mapping(feature), 'properties': {'resolution': resolution }} # TODO: The resolution is not the same than used!
+		result = {'geometry': mapping(feature), 'properties': {'resolution': resolution, 'url': url, 'layer_name': layer_name}} # TODO: The resolution is not the same than used!
 
 	with fiona.open(
 			output_dir + dst_layername + ".geojson" , 'w', 
 			driver="GeoJSON",
 			crs=fiona.crs.from_string(output_crs.to_proj4()) if output_crs else src.crs,
-			schema={'geometry': feature.type, 'properties': {'resolution': 'int'}}) as dst:
+			schema={'geometry': feature.type, 'properties': {'resolution': 'int', 'url': 'str', 'layer_name': 'str'}},
+			VALIDATE_OPEN_OPTIONS=False) as dst:
 		dst.write(result)
 
 	return MultiPolygon(feats_original_crs).bounds
