@@ -58,7 +58,7 @@ def solve(features, empty_raster, output_path, bin_output_path):
 	# Filter out results with no requests and no positive requests.
 	zero_mask_norm = norm_raster[0] == 0
 	zero_mask_pos = pos_raster[0] == 0
-	zero_mask = zero_mask_norm and zero_mask_pos
+	zero_mask = zero_mask_norm & zero_mask_pos
 
 	logging.info("there was {} requests included in the analysis".format(request_counter))
 	'''this is only for testing purposes
