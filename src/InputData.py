@@ -167,6 +167,8 @@ def get_bboxes_as_geojson(layer_bbox, responses, crs, sample=False, flip_feature
 
 	# TODO: this is an ugly hack 
 	if len(features) == 0:
+		if flip_features:
+			raise Exception("Coordinate order problem!")
 		logging.warning("No features found within layer bounding box. Trying again with different axis order.")
 		features, features_flipped = get_bboxes_as_geojson(layer_bbox, responses, crs, sample=sample, flip_features = True)
 		features_flipped = True
