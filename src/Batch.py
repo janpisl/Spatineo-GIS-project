@@ -49,18 +49,19 @@ def run_batch(cfg):
 		config.set('other', 'max_raster_size', max_raster_size)
 		config.set('other', 'max_features_for_validation', max_features)
 
+		try:
+			process = Process(config)
+			process.run_algorithm()
 
-		process = Process(config)
-		process.run_algorithm()
+			# validation of the result. 
+			validate(process.url, process.layer_name, process.crs.crs_code, 
+						process.layer_bbox, process.bin_raster_path, process.val_raster_output_path, 
+						process.service_type, process.service_version, process.max_features_for_validation,
+						process.flip_features, process.data_bounds)
 
-		# validation of the result. 
-		validate(process.url, process.layer_name, process.crs.crs_code, 
-					process.layer_bbox, process.bin_raster_path, process.val_raster_output_path, 
-					process.service_type, process.service_version, process.max_features_for_validation,
-					process.flip_features, process.data_bounds)
-
-		logging.info("file {} done \n \n".format(file))
-
+			logging.info("file {} done \n \n".format(file))
+		except Exception as e:
+			logging.info("file {} failed\nerror {} \n \n".format(file, e))
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
