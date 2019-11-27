@@ -116,7 +116,7 @@ def convert_to_vector_format(crs, output_dir, resolution, input_file, output_crs
 		mask = pixels == 1
 
 		# Tolerance for douglas peucker simplification
-		tol = 100 * log10(resolution)
+		tol = max(100 * log10(resolution), 0) # TODO: not work with degrees
 		
 		if crs != output_crs:
 			tr = Transformer.from_crs(crs, output_crs, always_xy=is_first_axis_east(output_crs)).transform
