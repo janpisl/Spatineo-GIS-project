@@ -57,7 +57,7 @@ def run_batch(cfg):
 			validate(process.url, process.layer_name, process.crs.crs_code, 
 						process.layer_bbox, process.bin_raster_path, process.val_raster_output_path, 
 						process.service_type, process.service_version, process.max_features_for_validation,
-						process.flip_features, process.data_bounds)
+						process.flip_features, process.data_bounds, process.service)
 
 			logging.info("file {} done \n \n".format(file))
 		except Exception as e:

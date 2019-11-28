@@ -24,7 +24,9 @@ class Process():
 		response_file_path = cfg.get('data', 'response_file')
 		capabilities_path = cfg.get('data', 'get_capabilities')
 		self.output_dir = cfg.get('data', 'output_dir')
+		self.service = get_capabilities.split('/')[-1].split('.')[0]
 		file = response_file_path.split('/')[-1].split('.')[0]
+
 
 		try:
 			self.output_raster_path = cfg.get('data', 'raster_output_path')
@@ -83,7 +85,7 @@ class Process():
 		self.layer_bbox = get_layer_bbox(capabilities_path, self.layer_name, self.crs, self.service_type)
 
 		#uses only 1/10 for bbox shrinking 
-		self.features_sample, self.flip_features = get_bboxes_as_geojson(self.layer_bbox, self.responses, self.crs, sample = False)
+		#self.features_sample, self.flip_features = get_bboxes_as_geojson(self.layer_bbox, self.responses, self.crs, sample = False)
 		
 		'''
 		self.coarse_raster = create_empty_raster(self.output_dir + "/" + "tmp_coarse.tif", 
@@ -103,7 +105,7 @@ class Process():
 		self.bbox = self.layer_bbox
 
 
-		self.features = get_bboxes_as_geojson(self.bbox, self.responses, self.crs, flip_features=self.flip_features)[0]
+		self.features, self.flip_features = get_bboxes_as_geojson(self.bbox, self.responses, self.crs)
 		self.raster, self.resolution = create_empty_raster(self.output_dir + "/" + "tmp.tif" , self.crs, self.bbox, self.resolution, max_raster_size=self.max_raster_size)
 
 
@@ -154,4 +156,4 @@ if __name__ == '__main__':
 	validate(process.url, process.layer_name, process.crs.crs_code, 
 				process.layer_bbox, process.bin_raster_path, process.val_raster_output_path, 
 				process.service_type, process.service_version, process.max_features_for_validation, 
-				process.flip_features, process.data_bounds)
+				process.flip_features, process.data_bounds, process.service)
