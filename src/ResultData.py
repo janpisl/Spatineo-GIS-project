@@ -137,13 +137,32 @@ def convert_to_vector_format(crs, output_dir, resolution, input_file, output_crs
 		feature = MultiPolygon(feats)
 		result = {'geometry': mapping(feature), 'properties': {'resolution': resolution, 'url': url, 'layer_name': layer_name}} # TODO: The resolution is not the same than used!
 
+
+
+		results_gpkg = ({'geometry': mapping(f), 'properties': {}} for f in feats)
+
+
+
+
+
 	with fiona.open(
 			output_dir + dst_layername + ".geojson" , 'w', 
 			driver="GeoJSON",
 			crs=fiona.crs.from_string(output_crs.to_proj4()) if output_crs else src.crs,
 			schema={'geometry': feature.type, 'properties': {'resolution': 'int', 'url': 'str', 'layer_name': 'str'}},
 			VALIDATE_OPEN_OPTIONS=False) as dst:
-		if len(feats) > 0:
-			dst.write(result)
+
+
+		with fiona.open(
+			output_dir + "0.001" + dst_layername + ".gpkg" , 'w', 
+			driver="GPKG",
+			crs=fiona.crs.from_string(output_crs.to_proj4()) if output_crs else src.crs,
+			schema={'geometry': 'Polygon', 'properties': {}}) as gpkg_dst:
+
+
+			if len(feats) > 0:
+				dst.write(result)
+				gpkg_dst.writerecords(results_gpkg)
+
 
 	return MultiPolygon(feats_original_crs).bounds
