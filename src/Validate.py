@@ -31,21 +31,21 @@ validation_file = /Users/juhohanninen/spatineo/validation.tif
 
 
 
-def write_statistics(output_path, layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels, bbox_area_decrease):
+def write_statistics(output_path, service, layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels, bbox_area_decrease):
 
 	stats_path = os.path.split(output_path)[0] + "/stats_" + datetime.datetime.now().strftime("%d.%b_%Y") + ".csv"
 
 	if not os.path.isfile(stats_path):
 		with open(stats_path, "w") as stats_file:
-			headers = ["Layer name", "Pixel count", "Correct", "False positives", "False negatives", "Area of new bounding box in %% of original"]
-			row = [layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels, bbox_area_decrease]
+			headers = ["Service number", "Layer name", "Pixel count", "Correct", "False positives", "False negatives", "Area of new bounding box in %% of original"]
+			row = [service, layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels, bbox_area_decrease]
 			writer = csv.writer(stats_file)
 			writer.writerow(headers)
 			writer.writerow(row)
 
 	else:
 		with open(stats_path, "a") as stats_file:
-			row = [layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels, bbox_area_decrease]
+			row = [service, layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels, bbox_area_decrease]
 			writer = csv.writer(stats_file)
 			writer.writerow(row)
 
@@ -55,7 +55,7 @@ def write_statistics(output_path, layer_name, pixels_count, correct_pixels, fals
 def area_decrease(bbox, data_bounds):
 	if len(data_bounds) == 0:
 		# No bounds means no data found -> 100% decrease
-		return 100
+		return 0
 	x_decr = (data_bounds[2] - data_bounds[0])/(bbox[2] - bbox[0])
 	y_decr = (data_bounds[3] - data_bounds[1])/(bbox[3] - bbox[1])
 	
@@ -63,10 +63,9 @@ def area_decrease(bbox, data_bounds):
 
 
 
-
 def test_pixel(image):
 	uniques = np.unique(image)
-	if len(uniques) == 1 and uniques[0] == 0:
+	if len(uniques) == 1 and uniques[0] in [0, 255]:
 		return False
 	else:
 		return True
@@ -82,7 +81,6 @@ def test_pixel(image):
 	return False'''
 
 def test_for_var(image):
-
 	data_grid = np.empty([3,3])
 	size_x = round(image.shape[0]/data_grid.shape[0])
 	size_y = round(image.shape[1]/data_grid.shape[1])
@@ -213,8 +211,8 @@ def validate_WFS(url, layer_name, srs, bbox, result_file, output_path, service_v
 
 
 
-def validate(url, layer_name, srs, bbox, result_path, output_path, service_type, service_version, max_features_for_validation, flip_features, data_bounds):
-
+def validate(url, layer_name, srs, bbox, result_path, output_path, service_type, service_version, max_features_for_validation, flip_features, data_bounds, service):
+	pdb.set_trace()
 	#self.service_type = Capabilities._get_service()
 	logging.info("validation starts at {}".format(datetime.datetime.now()))
 	# Open the file to be validated
@@ -280,7 +278,7 @@ def validate(url, layer_name, srs, bbox, result_path, output_path, service_type,
 
 	bbox_area_decrease = area_decrease(bbox, data_bounds)
 
-	write_statistics(output_path, layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels, bbox_area_decrease)
+	write_statistics(output_path, service, layer_name, pixels_count, correct_pixels, false_pos_pixels, false_neg_pixels, bbox_area_decrease)
 
 
 	return 0
