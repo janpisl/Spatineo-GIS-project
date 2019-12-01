@@ -1,6 +1,6 @@
-"""algorithm.py
+"""projection.py
 
-Helper functionality related to projection.
+Functionality related to projection.
 
 """
 

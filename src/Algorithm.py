@@ -1,6 +1,8 @@
 """algorithm.py
 
-Functions related to
+Functions used to produce rasters that give information
+about the spatial distribution of data within the area
+of a service.
 
 """
 
