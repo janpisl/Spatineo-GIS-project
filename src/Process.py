@@ -1,4 +1,4 @@
-"""batch.py docstring
+"""process.py
 
 For a json-like file with responses of requests and
 a Get_Capabilities document for a corresponding service,
@@ -135,7 +135,7 @@ class Process(object):
 
     def run_algorithm(self):
 
-        solve(self.features, self.raster, self.output_raster_path, self.bin_raster_path)
+        solve(self.features, self.raster, self.bin_raster_path)
         self.data_bounds = convert_to_vector_format(self.crs, self.output_dir, self.resolution,
                                                     self.bin_raster_path, self.output_crs,
                                                     self.url, self.layer_name)

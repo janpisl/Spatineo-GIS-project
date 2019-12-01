@@ -17,7 +17,21 @@ logging.basicConfig(filename="../../output_data/logs/" \
 
 
 def compute_density_rasters(features, empty_raster):
-    """ docstring"""
+    """Compute arrays of values based on features
+
+    Compute two arrays. Eval_raster counts how many 
+    negative requests there were for a particular pixel. 
+    Norm_raster keeps count of the number of all valid
+    requests for a pixel.
+
+    :param list features: Responses in GeoJson format
+    :param str empty_raster: Path to empty raster
+    :return: 
+        numpy array eval_raster: see above
+        numpy array norm_raster: see above
+        int request_counter: number of requests
+    """
+
     open_raster = rasterio.open(empty_raster)
     eval_raster = open_raster.read()
     norm_raster = np.copy(eval_raster)
@@ -46,10 +60,28 @@ def compute_density_rasters(features, empty_raster):
     return eval_raster, norm_raster, request_counter
 
 def solve(features, empty_raster, bin_output_path):
-    """ docstring"""
+    """Write resulting binary raster to disk
+
+    Produce resulting binary raster whose values are
+    set to True when the normalized value of eval_raster
+    is above a threshold. Write raster to disk.
+    
+    :const int THRESHOLD_CONSTANT: constant used for computing
+    the threshold. Not finding a reliable and robust way to base
+    the threshold computation solely on input values, the value of
+    the constant was decided to be such that it balances false
+    positive and false negative pixels when comparing against the
+    actual service data in validation.
+
+    :param list features: Responses in GeoJson format
+    :param str empty_raster: Path to empty raster
+    :param str bin_output_path: Path to store resulting raster
+
+    """
 
     eval_raster, norm_raster, request_counter = compute_density_rasters(features, empty_raster)
     open_raster = rasterio.open(empty_raster)
+    # Divide eval_raster by norm_raster to get values normalized by the number of requests
     np.divide(eval_raster, norm_raster,
               out=np.zeros_like(eval_raster),
               where=norm_raster != 0)
@@ -74,7 +106,7 @@ def solve(features, empty_raster, bin_output_path):
     logging.info("request_counter: {}".format(request_counter))
     logging.debug("norm average: {}".format(np.average(norm_raster)))
 
-    magic_constant = 0.075
+    THRESHOLD_CONSTANT = 0.075
     threshold = np.average(eval_raster)*magic_constant
     logging.debug("threshold is: {}".format(threshold))
     binary_raster = eval_raster > threshold
