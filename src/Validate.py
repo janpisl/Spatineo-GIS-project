@@ -98,6 +98,8 @@ def test_for_var(image):
 
 def validate_WMS(url, layer_name, srs, bbox, result_array, output_path, service_version):
 	
+	if srs == "CRS:84":
+		srs = "EPSG:4326"
 
 	#TODO: set height & width to higher values so more features are rendered? what values does Spatineo use?? 
 	#TODO: properly deal with service_version == None
@@ -212,11 +214,11 @@ def validate_WFS(url, layer_name, srs, bbox, result_file, output_path, service_v
 
 
 def validate(url, layer_name, srs, bbox, result_path, output_path, service_type, service_version, max_features_for_validation, flip_features, data_bounds, service):
-	pdb.set_trace()
 	#self.service_type = Capabilities._get_service()
 	logging.info("validation starts at {}".format(datetime.datetime.now()))
 	# Open the file to be validated
 	file = rasterio.open(result_path)
+
 
 	if flip_features:
 		bbox = [bbox[1], bbox[0], bbox[3], bbox[2]]

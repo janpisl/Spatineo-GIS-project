@@ -74,7 +74,7 @@ def solve(features, empty_raster, output_path, bin_output_path):
 	logging.info("request_counter: {}".format(request_counter))
 	logging.debug("norm average: ",np.average(norm_raster))
 
-	magic_constant = 0.1
+	magic_constant = 0.075
 	threshold = np.average(eval_raster)*magic_constant
 	logging.debug("threshold is: {}".format(threshold))
 	binary_raster = eval_raster > threshold

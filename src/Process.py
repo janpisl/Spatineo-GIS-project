@@ -24,7 +24,7 @@ class Process():
 		response_file_path = cfg.get('data', 'response_file')
 		capabilities_path = cfg.get('data', 'get_capabilities')
 		self.output_dir = cfg.get('data', 'output_dir')
-		self.service = get_capabilities.split('/')[-1].split('.')[0]
+		self.service = capabilities_path.split('/')[-1].split('.')[0]
 		file = response_file_path.split('/')[-1].split('.')[0]
 
 

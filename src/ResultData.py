@@ -154,7 +154,7 @@ def convert_to_vector_format(crs, output_dir, resolution, input_file, output_crs
 
 
 		with fiona.open(
-			output_dir + "0.001" + dst_layername + ".gpkg" , 'w', 
+			output_dir + dst_layername + ".gpkg" , 'w', 
 			driver="GPKG",
 			crs=fiona.crs.from_string(output_crs.to_proj4()) if output_crs else src.crs,
 			schema={'geometry': 'Polygon', 'properties': {}}) as gpkg_dst:
