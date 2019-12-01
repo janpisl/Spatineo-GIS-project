@@ -19,14 +19,14 @@ logging.basicConfig(filename="../../output_data/logs/" \
 def compute_density_rasters(features, empty_raster):
     """Compute arrays of values based on features
 
-    Compute two arrays. Eval_raster counts how many 
-    negative requests there were for a particular pixel. 
+    Compute two arrays. Eval_raster counts how many
+    negative requests there were for a particular pixel.
     Norm_raster keeps count of the number of all valid
     requests for a pixel.
 
     :param list features: Responses in GeoJson format
     :param str empty_raster: Path to empty raster
-    :return: 
+    :return:
         numpy array eval_raster: see above
         numpy array norm_raster: see above
         int request_counter: number of requests
@@ -107,7 +107,7 @@ def solve(features, empty_raster, bin_output_path):
     logging.debug("norm average: {}".format(np.average(norm_raster)))
 
     THRESHOLD_CONSTANT = 0.075
-    threshold = np.average(eval_raster)*magic_constant
+    threshold = np.average(eval_raster)*THRESHOLD_CONSTANT
     logging.debug("threshold is: {}".format(threshold))
     binary_raster = eval_raster > threshold
     binary_raster[0][zero_mask] = False
