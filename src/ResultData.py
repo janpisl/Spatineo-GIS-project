@@ -16,7 +16,7 @@ import datetime
 logging.basicConfig(filename="../../output_data/logs/" + datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") + '.log', level=logging.INFO)
 
 from Projection import is_first_axis_east
-
+from Algorithm import compute_density_rasters
 
 def get_raster_shapes(resolution, bbox, crs):
 	
@@ -166,3 +166,21 @@ def convert_to_vector_format(crs, output_dir, resolution, input_file, output_crs
 
 
 	return MultiPolygon(feats_original_crs).bounds
+
+
+def shrink_bbox(self, coarse_raster, features):
+    eval_raster, norm_raster, request_counter = \
+        compute_density_rasters(features, coarse_raster)
+
+    bin_norm_raster = norm_raster > np.max(norm_raster)/1000
+
+    open_coarse_raster = rasterio.open(coarse_raster)
+
+    datapixel_indices = np.argwhere(bin_norm_raster == True)
+
+    min_coords = open_coarse_raster.xy(np.max(datapixel_indices[:, 1]),
+                                       np.min(datapixel_indices[:, 2]), offset='ll')
+    max_coords = open_coarse_raster.xy(np.min(datapixel_indices[:, 1]),
+                                       np.max(datapixel_indices[:, 2]), offset='ur')
+
+    return [int(round(coord)) for coord in min_coords + max_coords]
