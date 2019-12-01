@@ -1,4 +1,4 @@
-"""batch.py docstring
+"""batch.py
 
 Automatizes the execution of the functionality in process.py for
 multiple files within one folder. It requires a configuration file.

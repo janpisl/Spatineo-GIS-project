@@ -112,7 +112,7 @@ class Process(object):
         self.coarse_raster = create_empty_raster(self.output_dir + "/" + "tmp_coarse.tif",
             self.crs, self.layer_bbox, resolution="coarse", max_raster_size=self.max_raster_size)
 
-        self.bbox = self.shrink_bbox(self.coarse_raster, self.features_sample)
+        self.bbox = shrink_bbox(self.coarse_raster, self.features_sample)
         logging.info("layer bbox: {}".format(self.layer_bbox))
         logging.info("shrinked bbox: {}".format(self.bbox))
         # If shrinked bbox isn't smaller than original, use original
