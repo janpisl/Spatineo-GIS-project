@@ -143,7 +143,7 @@ def convert_to_vector_format(crs, output_dir, resolution,
     :return tuple: spatial extent of the data
     """
 
-    dst_layername = input_file.split('/')[-1].split('.')[0]
+    dst_layername = input_file.split('/')[-1].rsplit('.', 1)[0]
 
     with rasterio.open(input_file, driver='GTiff', mode='r') as src:
         image = src.read(1)
