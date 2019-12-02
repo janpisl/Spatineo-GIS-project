@@ -172,7 +172,7 @@ def convert_to_vector_format(crs, output_dir, resolution,
         # Transformation and convertion from shapely shape to geojson-like object for fiona.
         feats = []
         feats_original_crs = []
-        for s in shapes(pixels, mask=mask, transform=src.transform)[0]:
+        for (s, v) in shapes(pixels, mask=mask, transform=src.transform):
             shp = shape(s).simplify(tol)
             feats_original_crs.append(shp)
             if tr:

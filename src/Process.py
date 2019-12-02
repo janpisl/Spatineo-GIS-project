@@ -48,6 +48,7 @@ class Process(object):
         capabilities_path = cfg.get('data', 'get_capabilities')
         self.output_dir = cfg.get('data', 'output_dir')
         self.service = capabilities_path.split('/')[-1].split('.')[0]
+        
         file = response_file_path.split('/')[-1].split('.')[0]
 
         try:
@@ -85,6 +86,7 @@ class Process(object):
 
         input_crs = self.responses_header['crs']
         input_axis_dir = cfg.get('input', 'first_axis_direction')
+
         if input_axis_dir not in ('east', 'north', 'epsg'):
             input_axis_dir = solve_first_axis_direction(self.service_type,
                                                         self.service_version, input_crs)
@@ -100,7 +102,6 @@ class Process(object):
         self.url = self.responses[0]['url'].split("?")[0]
 
 
-        ## INITIAL PROCESSING TO GET SMALLER BBOX
         self.layer_bbox = get_layer_bbox(capabilities_path, self.layer_name,
                                          self.crs, self.service_type)
 

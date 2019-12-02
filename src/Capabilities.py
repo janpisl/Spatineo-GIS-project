@@ -128,15 +128,14 @@ def get_layer_bbox_wms(root, layer_name, crs):
                     break
         return bbox
 
-
-    elements = root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}\
-                            Layer/{http://www.opengis.net/wms}Layer/\
-                            {http://www.opengis.net/wms}Layer/')\
-                            + root.findall('{http://www.opengis.net/wms}Capability/\
-                                {http://www.opengis.net/wms}Layer/\
-                                {http://www.opengis.net/wms}Layer/')\
-                            + root.findall('{http://www.opengis.net/wms}Capability/\
-                                {http://www.opengis.net/wms}Layer/')\
+    elements = root.findall('{http://www.opengis.net/wms}Capability/{http://www.opengis.net/wms}' 
+                            + 'Layer/{http://www.opengis.net/wms}Layer/'
+                            + '{http://www.opengis.net/wms}Layer/')  \
+                            + root.findall('{http://www.opengis.net/wms}Capability/'
+                            +    '{http://www.opengis.net/wms}Layer/'
+                            +    '{http://www.opengis.net/wms}Layer/') \
+                            + root.findall('{http://www.opengis.net/wms}Capability/'
+                            +    '{http://www.opengis.net/wms}Layer/') \
                             + root.findall('Capability/Layer/Layer/Layer/')\
                             + root.findall('Capability/Layer/')\
                             + root.findall('Capability/Layer/Layer/')

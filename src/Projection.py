@@ -22,29 +22,23 @@ def solve_first_axis_direction(service_type, service_version, crs_name):
 
     :return str first_axis_dir: Direction of the first axis
     """
-
     version_num = [int(num) for num in service_version.split('.')]
-    first_axis_dir = ''
     if service_type == 'WMS':
         if version_num[0] <= 1 and version_num[1] < 3:
-            first_axis_dir = 'east'
-        first_axis_dir = 'epsg'
+            return 'east'
+        return 'epsg'
 
     elif service_type == 'WFS':
         if version_num[0] == 1 and version_num[1] < 1:
-            first_axis_dir = 'east'
+            return 'east'
         if crs_name.startswith('http://www.opengis.net/gml/'):
-            first_axis_dir = 'east'
+            return 'east'
         if crs_name.startswith('urn:'):
-            first_axis_dir = 'epsg'
-        first_axis_dir = 'epsg'
+            return 'epsg'
+        return 'epsg'
 
-    else:
-        first_axis_dir = 'epsg'
-    if first_axis_dir == 'epsg':
-        logging.warning("Couldn't solve first axis order. Using EPSG database info.")
-
-    return first_axis_dir
+    #logging.warning("Couldn't solve first axis order. Using EPSG database info.")
+    return 'epsg'
 
 def is_first_axis_east(crs):
     """ Check if the first axis is 'east'

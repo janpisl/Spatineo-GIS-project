@@ -177,8 +177,8 @@ def get_bboxes_as_geojson(layer_bbox, responses, crs, sample=False, flip_feature
                      .format(invalid_request_count))
 
     if bbox_out_count > 0:
-        logging.info("Filtered {} requests away because request bbox \
-                      was not completely within layer bbox".format(bbox_out_count))
+        logging.info("Filtered {} requests away because request bbox"  
+                      + "was not completely within layer bbox".format(bbox_out_count))
 
     '''else:
         self.bbox = coords_min + coords_max
@@ -189,8 +189,8 @@ def get_bboxes_as_geojson(layer_bbox, responses, crs, sample=False, flip_feature
     if len(features) == 0:
         if flip_features:
             raise Exception("Coordinate order problem!")
-        logging.warning("No features found within layer bounding box. \
-                        Trying again with different axis order.")
+        logging.warning("No features found within layer bounding box."
+                        + "Trying again with different axis order.")
         features, features_flipped = get_bboxes_as_geojson(layer_bbox, responses, crs,
                                                            sample=sample, flip_features=True)
         features_flipped = True

@@ -11,6 +11,7 @@ import logging
 import pdb
 import numpy as np
 import rasterio
+from rasterio import mask
 
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
 logging.basicConfig(filename="../../output_data/logs/" \
@@ -108,7 +109,7 @@ def solve(features, empty_raster, bin_output_path):
     logging.info("request_counter: {}".format(request_counter))
     logging.debug("norm average: {}".format(np.average(norm_raster)))
 
-    THRESHOLD_CONSTANT = 0.075
+    THRESHOLD_CONSTANT = 0.05
     threshold = np.average(eval_raster)*THRESHOLD_CONSTANT
     logging.debug("threshold is: {}".format(threshold))
     binary_raster = eval_raster > threshold
