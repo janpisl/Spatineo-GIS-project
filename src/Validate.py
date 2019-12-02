@@ -15,6 +15,7 @@ from PIL import Image
 from osgeo import ogr, gdal
 import rasterio.features
 import geojson
+import signal
 
 import requests
 
@@ -22,6 +23,11 @@ import requests
 logging.basicConfig(filename="../../output_data/logs/" \
                     + datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") \
                     + '.log', level=logging.INFO)
+
+
+def handler(signum, frame):
+   logging.error("validation took so long - terminated")
+   raise Exception("validation took so long - terminated")
 
 
 def write_statistics(output_path, service_number, layer_name, pixels_count, correct_pixels,
@@ -79,11 +85,11 @@ def area_decrease(bbox, data_bounds):
     """
     if len(data_bounds) == 0:
         # No bounds means no data found -> 100% decrease
-        return 0
+        return 100
     x_decr = (data_bounds[2] - data_bounds[0])/(bbox[2] - bbox[0])
     y_decr = (data_bounds[3] - data_bounds[1])/(bbox[3] - bbox[1])
 
-    return x_decr*y_decr*100
+    return round(x_decr*y_decr*100)
 
 
 def test_pixel(image):
@@ -157,11 +163,11 @@ def validate_wms(url, layer_name, srs, bbox, result_array, service_version):
         service_version = "1.3.0"
     if service_version == "1.3.0":
         req_url = "{}?VERSION={}&SERVICE=WMS&REQUEST=GetMap&LAYERS={}&STYLES=&CRS={}\
-                   &BBOX={}&WIDTH=1024&HEIGHT=1024&FORMAT=image/png&EXCEPTIONS=XML"\
+                   &BBOX={}&WIDTH=256&HEIGHT=256&FORMAT=image/png&EXCEPTIONS=XML"\
                    .format(url, service_version, layer_name, srs, bbox)
     elif service_version == "1.1.1":
         req_url = "{}?VERSION={}&SERVICE=WMS&REQUEST=GetMap&LAYERS={}&STYLES=&SRS={}\
-                   &BBOX={}&WIDTH=1024&HEIGHT=1024&FORMAT=image/png&EXCEPTIONS=XML"\
+                   &BBOX={}&WIDTH=256&HEIGHT=256&FORMAT=image/png&EXCEPTIONS=XML"\
                    .format(url, service_version, layer_name, srs, bbox)
     else:
         raise Exception("Unknown service_version {}".format(service_version))
@@ -178,7 +184,8 @@ def validate_wms(url, layer_name, srs, bbox, result_array, service_version):
     real_data = test_for_var(image).astype("uint8")
 
     our_grid = test_for_var(result_array).astype("uint8")
-
+    logging.info("WMS validation: data fetched from server:\n {}".format(real_data))
+    logging.info("WMS validation: our data:\n {}".format(our_grid))
     return real_data, our_grid
 
 def validate_wfs(url, layer_name, srs, bbox, result_file,\
@@ -216,6 +223,7 @@ def validate_wfs(url, layer_name, srs, bbox, result_file,\
 
     # Open the webservice
 
+    try_url = "https://geodata.nationaalgeoregister.nl/inspireadressen/v2/wfs?language=dut&SERVICE=WFS&VERSION=2.0.0&SRSNAME=urn:ogc:def:crs:EPSG::28992&BBOX=138857.59757060264,559646.0172022979,258777.14235332562,679565.5619850209"
     #TODO: use version -> if service_version is not None: ...
     req_url = "{}?service=wfs&version=2.0.0&srsName={}&BBOX={}".format(url, srs, bbox)
     logging.info("URL used for validation: {}".format('WFS:' + req_url))
@@ -322,19 +330,26 @@ def validate(url, layer_name, srs, bbox, result_path, output_path, service_type,
     # change bbox from a list into a string, remove spaces and brackets
     bbox_str = ''.join(char for char in str(bbox) if char not in '[]() ')
 
-    if service_type == 'WMS':
 
-        real_data, result = validate_wms(url, layer_name, srs, bbox_str,\
-                                         file.read(1), service_version)
+    try: 
+        signal.alarm(300)
+        if service_type == 'WMS':
 
-    elif service_type == 'WFS':
+            real_data, result = validate_wms(url, layer_name, srs, bbox_str,\
+                                             file.read(1), service_version)
 
-        real_data, result = validate_wfs(url, layer_name, srs, bbox_str, file,\
-                                         service_version, max_features_for_validation), file.read(1)
+        elif service_type == 'WFS':
 
-    if real_data is None:
-        logging.warning("Validation not successful. *feeling embarassed*")
-        return -1
+            real_data, result = validate_wfs(url, layer_name, srs, bbox_str, file,\
+                                             service_version, max_features_for_validation), file.read(1)
+
+        if real_data is None:
+            logging.warning("Validation not successful. *feeling embarassed*")
+            return -1
+    
+    except Exception as e:
+        print(e)
+    signal.alarm(0)
 
     # Since result is binary, the comparison is 0 if a value was the same.
     # 1 if we got false positive and -1 (i.e. 255 in uint8) if we got false negative.
