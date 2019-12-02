@@ -173,12 +173,13 @@ def get_bboxes_as_geojson(layer_bbox, responses, crs, sample=False, flip_feature
         features.append(feat)
 
     if invalid_request_count > 0:
-        logging.info("Filtered {} requests away due to failed request."
-                     .format(invalid_request_count))
+        logging.info("Filtered {} requests away due to failed request." \
+                     .format(invalid_request_count))               
+
 
     if bbox_out_count > 0:
-        logging.info("Filtered {} requests away because request bbox"  
-                      + "was not completely within layer bbox".format(bbox_out_count))
+        logging.info("Filtered {} requests away because".format(bbox_out_count)  \
+                      + " request bbox was not completely within layer bbox")
 
     '''else:
         self.bbox = coords_min + coords_max
