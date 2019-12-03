@@ -25,6 +25,7 @@ def transform_bbox(bbox, transform_from, transform_to):
 
     :return tuple bbox: transformed bounding box
     """
+
     to_crs_84_flag = None
     from_crs_84_flag = None
 
@@ -49,7 +50,7 @@ def transform_bbox(bbox, transform_from, transform_to):
             code = projection
             epsg = "EPSG"
 
-        assert epsg == "EPSG" and isinstance(code, int)
+        assert epsg == "EPSG"
         projection = epsg + ":" + str(code)
 
 
@@ -166,8 +167,8 @@ def get_layer_bbox_wfs(root, layer_name, crs):
     layer = False
 
     #WFS ver. 2.x.x
-    for elem in root.findall('./{http://www.opengis.net/wfs/2.0}FeatureTypeList/\
-                             {http://www.opengis.net/wfs/2.0}FeatureType'):
+    for elem in root.findall('./{http://www.opengis.net/wfs/2.0}FeatureTypeList/' \
+                             + '{http://www.opengis.net/wfs/2.0}FeatureType'):
         for child in elem:
             if child.text:
                 if ":" in child.text:
@@ -186,8 +187,9 @@ def get_layer_bbox_wfs(root, layer_name, crs):
                         lonlat2 = elem.text.split()
                         lonlat2 = [float(i) for i in lonlat2]
                     else:
-                        raise Exception("Unexpected bbox value when parsing xml: {}.\
-                                        Expected LowerCorner or UpperCorner".format(elem.tag))
+                        raise Exception("Unexpected bbox value when"
+                                        + "parsing xml: {}.".format(elem.tag) 
+                                        + "Expected LowerCorner or UpperCorner")
 
                 bbox0 = lonlat1 + lonlat2
                 layer = False
@@ -195,8 +197,8 @@ def get_layer_bbox_wfs(root, layer_name, crs):
 
 
     #WFS ver. 1.x.x (1.0.x, 1.1.x)
-    for elem in root.findall('./{http://www.opengis.net/wfs}FeatureTypeList\
-                             /{http://www.opengis.net/wfs}FeatureType'):
+    for elem in root.findall('./{http://www.opengis.net/wfs}FeatureTypeList'
+                             + '/{http://www.opengis.net/wfs}FeatureType'):
         for child in elem:
             if child.text:
                 if ':' in child.text:
@@ -228,13 +230,13 @@ def get_layer_bbox_wfs(root, layer_name, crs):
 
     # conversion of bbox0 (WGS84 to self.crs)
     if not bbox and bbox0:
-
         bbox = transform_bbox(bbox0, "EPSG:4326", crs.to_epsg())
 
 
     return bbox
 
 def get_layer_bbox(path_to_capabl, layer_name, crs, service_type):
+
     """Get bounding box from a Get_Capabilities document
 
     :param str path_to_capabl: path to the file
