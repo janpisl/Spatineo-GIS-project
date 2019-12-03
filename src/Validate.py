@@ -15,8 +15,6 @@ from PIL import Image
 from osgeo import ogr, gdal
 import rasterio.features
 import geojson
-import signal
-
 import requests
 
 # logging levels = DEBUG, INFO, WARNING, ERROR, CRITICAL
@@ -25,9 +23,7 @@ logging.basicConfig(filename="../../output_data/logs/" \
                     + '.log', level=logging.INFO)
 
 
-def handler(signum, frame):
-   logging.error("validation took so long - terminated")
-   raise Exception("validation took so long - terminated")
+
 
 
 def write_statistics(output_path, service_number, layer_name, pixels_count, correct_pixels,
@@ -331,25 +327,21 @@ def validate(url, layer_name, srs, bbox, result_path, output_path, service_type,
     bbox_str = ''.join(char for char in str(bbox) if char not in '[]() ')
 
 
-    try: 
-        signal.alarm(300)
-        if service_type == 'WMS':
+    if service_type == 'WMS':
 
-            real_data, result = validate_wms(url, layer_name, srs, bbox_str,\
-                                             file.read(1), service_version)
+        real_data, result = validate_wms(url, layer_name, srs, bbox_str,\
+                                         file.read(1), service_version)
 
-        elif service_type == 'WFS':
+    elif service_type == 'WFS':
 
-            real_data, result = validate_wfs(url, layer_name, srs, bbox_str, file,\
-                                             service_version, max_features_for_validation), file.read(1)
+        real_data, result = validate_wfs(url, layer_name, srs, bbox_str, file,\
+                                         service_version, max_features_for_validation), file.read(1)
 
-        if real_data is None:
-            logging.warning("Validation not successful. *feeling embarassed*")
-            return -1
+    if real_data is None:
+        logging.warning("Validation not successful. *feeling embarassed*")
+        return -1
     
-    except Exception as e:
-        print(e)
-    signal.alarm(0)
+
 
     # Since result is binary, the comparison is 0 if a value was the same.
     # 1 if we got false positive and -1 (i.e. 255 in uint8) if we got false negative.

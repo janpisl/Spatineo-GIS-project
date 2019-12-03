@@ -88,28 +88,30 @@ def solve(features, empty_raster, bin_output_path):
     np.divide(eval_raster, norm_raster,
               out=np.zeros_like(eval_raster),
               where=norm_raster != 0)
+
+
     zero_mask = norm_raster[0] == 0
     logging.info("there was {} requests included in the analysis".format(request_counter))
-    '''
-    # Save the image into disk.
+    
+    '''# Save the image into disk.
     img_output = rasterio.open(
-        "../../output_data/35_norm_raster.tif",
+        "../../output_data/eval_raster.tif",
         'w',
         driver='GTiff',
-        nodata=nd,
+        nodata=99,
         height=open_raster.height,
         width = open_raster.width,
         count=1,
         dtype = open_raster.dtypes[0],
         crs=open_raster.crs,
         transform=open_raster.transform)
-    img_output.write(norm_raster)
+    img_output.write(eval_raster)
     img_output.close()'''
 
     logging.info("request_counter: {}".format(request_counter))
     logging.debug("norm average: {}".format(np.average(norm_raster)))
 
-    THRESHOLD_CONSTANT = 0.05
+    THRESHOLD_CONSTANT = 0.02
     threshold = np.average(eval_raster)*THRESHOLD_CONSTANT
     logging.debug("threshold is: {}".format(threshold))
     binary_raster = eval_raster > threshold
