@@ -24,7 +24,7 @@ import json
 from Algorithm import solve
 from Validate import validate
 from InputData import get_resolution, get_service_type, get_bboxes_as_geojson
-from ResultData import create_empty_raster, convert_to_vector_format, shrink_bbox
+from ResultData import create_empty_raster, convert_to_vector_format
 from Projection import CRS, solve_first_axis_direction
 from Capabilities import get_layer_bbox
 
@@ -105,31 +105,10 @@ class Process(object):
         self.layer_bbox = get_layer_bbox(capabilities_path, self.layer_name,
                                          self.crs, self.service_type)
 
-        '''
-        #uses only 1/10 for bbox shrinking
-        #self.features_sample, self.flip_features = \
-            get_bboxes_as_geojson(self.layer_bbox, self.responses, self.crs, sample = False)
-
-        self.coarse_raster = create_empty_raster(self.output_dir + "/" + "tmp_coarse.tif",
-            self.crs, self.layer_bbox, resolution="coarse", max_raster_size=self.max_raster_size)
-
-        self.bbox = shrink_bbox(self.coarse_raster, self.features_sample)
-        logging.info("layer bbox: {}".format(self.layer_bbox))
-        logging.info("shrinked bbox: {}".format(self.bbox))
-        # If shrinked bbox isn't smaller than original, use original
-        if (self.layer_bbox[3]-self.layer_bbox[1]) <= (self.bbox[3]-self.bbox[1]) \
-           and (self.layer_bbox[2]-self.layer_bbox[0]) <= (self.bbox[2]-self.bbox[0]):
-            self.bbox = self.layer_bbox
-        else:
-            logging.info("Bounding box based on spatial distribution of requests is being used.")
-        ## END
-        '''
-        self.bbox = self.layer_bbox
-
-        self.features, self.flip_features = get_bboxes_as_geojson(self.bbox,
+        self.features, self.flip_features = get_bboxes_as_geojson(self.layer_bbox,
                                                                   self.responses, self.crs)
         self.raster, self.resolution = create_empty_raster(self.output_dir + "/" + "tmp.tif", \
-                                                           self.crs, self.bbox, self.resolution, \
+                                                           self.crs, self.layer_bbox, self.resolution, \
                                                            max_raster_size=self.max_raster_size)
 
 
