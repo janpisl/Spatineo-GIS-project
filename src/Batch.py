@@ -15,7 +15,7 @@ import datetime
 import configparser
 import argparse
 import pdb
-
+import signal
 from pathlib import Path
 from Process import Process
 from Validate import validate
@@ -23,6 +23,11 @@ from Validate import validate
 logging.basicConfig(filename="../../output_data/logs/" \
                     + datetime.datetime.now().strftime("%d.%b_%Y_%H_%M_%S") \
                     + '.log', level=logging.INFO)
+
+def handler(signum, frame):
+   logging.error ("validation took too long - terminated")
+   raise Exception("validation took too long - terminated")
+
 
 
 def run_batch(cfg):
@@ -47,6 +52,8 @@ def run_batch(cfg):
     output_first_axis_direction = cfg.get('result', 'first_axis_direction')
     max_raster_size = cfg.get('other', 'max_raster_size')
     max_features = cfg.get('other', 'max_features_for_validation')
+
+    signal.signal(signal.SIGALRM, handler)
 
     for file_path in glob.glob(directory + '*.json'):
         file = Path(file_path).stem
@@ -77,12 +84,19 @@ def run_batch(cfg):
             process = Process(config)
             process.run_algorithm()
 
-            # validation of the result.
-            validate(process.url, process.layer_name, process.crs.crs_code,
-                     process.layer_bbox, process.bin_raster_path,
-                     process.val_raster_output_path, process.service_type,
-                     process.service_version, process.max_features_for_validation,
-                     process.flip_features, process.data_bounds, process.service)
+
+            signal.alarm(180)
+            try:
+                # validation of the result.
+                validate(process.url, process.layer_name, process.crs.crs_code,
+                         process.layer_bbox, process.bin_raster_path,
+                         process.val_raster_output_path, process.service_type,
+                         process.service_version, process.max_features_for_validation,
+                         process.flip_features, process.data_bounds, process.service)
+
+            except Exception as e:
+                print(e)
+            signal.alarm(0)
 
             logging.info("File '{}' done. \n \n".format(file))
         except Exception as e:
