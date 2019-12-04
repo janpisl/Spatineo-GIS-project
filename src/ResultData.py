@@ -86,14 +86,6 @@ def create_empty_raster(output_path, crs, bbox, resolution, max_raster_size, dri
         int resolution: Pixel size of the raster
     """
 
-    skip_logging = False
-    COARSE_RES = 50
-
-    if resolution == "coarse":
-        avg_dist = (abs(bbox[0] - bbox[2]) + abs(bbox[1] - bbox[3]))/2
-        resolution = avg_dist/COARSE_RES
-        skip_logging = True
-
     while True:
         height, width, transform = get_raster_shapes(resolution, bbox, crs)
         if height*width <= max_raster_size:
@@ -101,10 +93,9 @@ def create_empty_raster(output_path, crs, bbox, resolution, max_raster_size, dri
         else:
             resolution = resolution*2
 
-    if not skip_logging:
-        logging.info("Resolution with which the analysis will be done set to: '{}' "
-                     .format(resolution))
-        logging.info("Raster size set to {}, {}".format(height, width))
+    logging.info("Resolution with which the analysis will be done set to: '{}' "
+                 .format(resolution))
+    logging.info("Raster size set to {}, {}".format(height, width))
     # Init raster with zeros.
     data = np.zeros(shape=(height, width))
 

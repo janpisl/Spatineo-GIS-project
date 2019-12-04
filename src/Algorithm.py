@@ -133,4 +133,4 @@ def solve(features, empty_raster, bin_output_path):
     bin_output.write(binary_raster.astype(np.uint8))
     bin_output.close()
 
-    logging.info("Algorithm finished, binary raster created")
+    logging.info("Algorithm finished, binary raster created.")
