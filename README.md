@@ -141,19 +141,21 @@ The configuration should have following variables:
 - `output_dir`: Directory where the output data will be placed.
 
 `[input]`
-- `first_axis_direction`: Define the first axis direction for input data. Options: `east`, `north`, `epsg` (pyproj database), `auto` (guess from the service). Prefer `auto` option.
+- `first_axis_direction`: Define the first axis direction for input data. Options: `east`, `north`, `epsg` (pyproj database), `auto` (guess from the service). Prefer `auto` option, but try somethign else if there'll problems with the order.
 
 `[result]`
-- `resolution`: Resolution with which the analysis is done (in meters)
+- `resolution`: Resolution with which the analysis is done (in meters). Optimal value is usually somewhere between 1000 and 100000. The bigger the resolution, the faster the algorithm is. Downside of the big resolution is rougher result.
 - `output_crs`: Output coordinate reference system (EPSG-code)
 - `first_axis_direction`: Define the first axis direction for output data. Options: `east`, `epsg` (pyproj database). Prefer `east` option, because GIS softwares are usually not awared of north first order even with geographic coordinates.
 
 `[other]`
-- `max_features_for_validation`: Used for WFS validation. If number of features in a layer used for validation exceeds the limit, validation is skipped. If not set, validation is performed regardless of the feature count.
-- `max_raster_size`: Maximum size of the raster file in pixels. If this value is exceeded, resolution decreases to meet the requirement. **This is crucial for the program runtime.**
+- `max_features_for_validation`: Used for WFS validation. If number of features in a layer used for validation exceeds the limit, validation is skipped. If not set, validation is performed regardless of the feature count. Experimentally suggested value: 100000.
+- `max_raster_size`: Maximum size of the raster file in pixels. If this value is exceeded, resolution decreases to meet the requirement. **This is crucial for the program runtime.** Experimentally suggested value: 500000.
 
 See the example files [process_config.ini](sample_data/process_config.ini) and [batch_config.ini](batch/process_config.ini).
 
+
+To adjust result, see also constants `THRESHOLD_CONSTANT` in [Algorithm.py](/src/Algorithm.py) (affects the interpretation of data existence), and `SMOOTHING_FACTOR` (affects the smoothing of the raster) and  `SIMPLIFICATION_FACTOR` (affects the simplification of vector result) in [ResultData.py](/src/ResultData.py)
 
 ### Running
 
