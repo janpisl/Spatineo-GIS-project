@@ -134,6 +134,7 @@ It's possible to run the program for one file or as a batch process for multiple
 First create a configuration file in .ini format.
 
 The configuration should have following variables:
+
 `[data]`
 - `response_file`: Path to the file (Process.py) or directory (Batch.py) containing monitoring results. 
 - `get_capabilities`: Path to the GetCapabilities-response file (Process.py) or directory (Batch.py). 
@@ -171,20 +172,20 @@ python Batch.py <path to config file>
 ```
 Depending on the file and service, the analysis takes something from tens of seconds to a couple of minutes. (With about 50000 requests.) The most time consuming part in the algorithm is masking requests to the empty raster created by the layer bounding box. To speed up process, increase the resolution. Also validation might take time depending on the service.
 
-### Output files
+## Output files
 
-#### Result
+### Result
 The result consists of three files with the prefix `bin_`. 
 - `.tif` file is the raster file of the analysis in binary format. 1 means data and 0 means non-data area.
 - `.geojson` and `.gpkg` files contain the smoothed and simplified result in vector format. Geopackage file is computationally more efficient and advance (could be configured to contain multiple results in one file) but it takes more space especially for one service. GeoJSON file is human-readable and usually smaller, but could be not so widely supported and fail with complex geometries. The schema contains url, layer name, used resolution. The vector output can be modified in [ResultData.py](/src/ResultData.py) module.
 
-#### Validation
+### Validation
 Validation consists of `val_*.tif` files and `.csv` summary file. Validation is made against the data provided by the server. In WFS services all features are fetched from the server and masked over the result. In WMS map image is asked from the server, image is analysed in the same way than the image analysis of monitoring service works, and results are combined to each other.
 In validation raster 0 means right analysis, -1 (or 255 in uint8) false negative and 1 false positive result.
 Validation results are summarized by the layer in csv file.
 
-#### Logs
-Logs are generated in [../output_data/logs/] directory. Logging levels can be configured in the beginning of the each module.
+### Logs
+Logs are generated in `../output_data/logs/` directory. Logging levels can be configured in the beginning of the each module.
 
 
 ## Known issues and future development
@@ -196,7 +197,7 @@ Because there're always less requests in the border areas of the bounding box, t
 Spatial services are configured sometimes against the standards, and the axis order might be different. Especially there're problems with services where first axis could be pointing north. (Usually geographic coordinates given in degrees.) There's possibility to configure direction manually, and in addition there's one automatic axis flipping if requests don't seem to be inside the bounding box area. Unfortunately, the current implementation might not work right with all possible cases.
 
 ### tmp.tif creation
-Because rasterio can't be used without existing file, empty [tmp.tif] file is always created in the output data directory. It should be moved to use Python's tempfile module or removed after process.
+Because rasterio can't be used without existing file, empty `tmp.tif` file is always created in the output data directory. It should be moved to use Python's tempfile module or removed after process.
 
 ### Automatic validation with WMS
 The validation is not working very robust with WMS services. First of all, validation resolution is rough, because it's not wise to send very many queries, for example for every pixes. Secondly the service might send just a blank image which makes validation impossible.
