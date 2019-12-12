@@ -28,23 +28,23 @@ All source code files are in [src](/src) directory. Example configuration files 
 
 The source code consists of 9 modules. Here are short descriptions of the modules. More documentation of the content of modules and their functions can be found in the code.
 
-**Process.py** - The module to call when running the program for a single file. Contains the class that initializes all needed values for the program.
+[**Process.py**](src/Process.py) - The module to call when running the program for a single file. Contains the class that initializes all needed values for the program.
 
-**Batch.py** - The module to call when running batch process. Calls Process.py for all input files in the configured directory.
+[**Batch.py**](src/Batch.py) - The module to call when running batch process. Calls Process.py for all input files in the configured directory.
 
-**Algorithm.py** - Contains the algorithm to calculate the analysis.
+[**Algorithm.py**](src/Algorithm.py) - Contains the algorithm to calculate the analysis.
 
-**Capabilities.py** - Contains functions to parse needed information from Capabilities.xml files.
+[**Capabilities.py**](src/Capabilities.py) - Contains functions to parse needed information from Capabilities.xml files.
 
-**InputData.py** - Contains funtions to parse data from input monitoring result file. E.g. converts all requests in geojson-like objects for the analysis.
+[**InputData.py**](src/InputData.py) - Contains funtions to parse data from input monitoring result file. E.g. converts all requests in geojson-like objects for the analysis.
 
-**Projection.py** - Contains a class to handle all coordinate reference system information with pyproj library.
+[**Projection.py**](src/Projection.py) - Contains a class to handle all coordinate reference system information with pyproj library.
 
-**ResultData.py** - Contains functions to create output files.
+[**ResultData.py**](src/ResultData.py) - Contains functions to create output files.
 
-**Validate.py** - Contains functions to validate results of WMS and WFS services.
+[**Validate.py**](src/Validate.py) - Contains functions to validate results of WMS and WFS services.
 
-**Compare.py** - A draft to generate QGIS project file which shows the results. Not used by program.
+[**Compare.py**](src/Compare.py) - A draft to generate QGIS project file which shows the results. Not used by program. See [future development](#qgis-validation).
 
 
 
