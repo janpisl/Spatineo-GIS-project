@@ -14,7 +14,6 @@ import numpy as np
 import scipy.ndimage
 
 from shapely.geometry import shape, mapping, MultiPolygon
-# TODO: check naming if it overlapping or not to variables of this file?
 from shapely.ops import transform as shapely_transform
 import rasterio
 from rasterio.features import shapes
@@ -67,7 +66,6 @@ def get_raster_shapes(resolution, bbox, crs):
         height = round((maxx - minx) / resolution)
         width = round((maxy - miny) / resolution)
         transform = rasterio.transform.from_origin(miny, maxx, resolution, resolution)
-
 
     return height, width, transform
 
@@ -122,8 +120,24 @@ def create_empty_raster(output_path, crs, bbox, resolution, max_raster_size, dri
 
 def convert_to_vector_format(crs, output_dir, resolution,
                              input_file, output_crs, url, layer_name):
-    """Create layer name based on the raster file name
+    """Convert raster to vector format (GPKG and GeoJSON)
+    File names are based on the raster file name.
+    
+    :const float SMOOTHING_FACTOR: constant used for adjusting smoothing
+    of the result. Factor affects to the size of the smoothing kernel, which
+    is calculated from the smaller side of the result. Final kernel size is
+    rouded value of size * SMOOTHING_FACTOR, so the factor can be interpreted
+    as a proportion of the image size. If the smoothing kernel is lower than 1
+    pixel or bigger than the smaller side of image, smoothing is skipped.
+    Experimentally good value is 0.03. Value must be between 0 and 1.
 
+    :const float SIMPLIFICATION_FACTOR: constant used for calculating tolerance
+    for Douglas-Peucker simplification to simplify the result data.
+    Final tolerance is resolution * SIMPLIFICATION_FACTOR. The bigger
+    the factor, the rougher the output. Experimentally good value is 0.3.
+    Value must be positive.
+
+    :param CRS object crs: Contains information related to CRS
     :param str output_dir: Path leading to directory where outputs are created
     :param int resolution: Default resolution of the raster
     :param str input_file: Path to the binary raster created in algorithm.solve
@@ -139,11 +153,12 @@ def convert_to_vector_format(crs, output_dir, resolution,
     with rasterio.open(input_file, driver='GTiff', mode='r') as src:
         image = src.read(1)
 
-        # Smooth output with median filter.
-        # TODO: Move experimental this factor to config?
-        smooth_kernel_size = round(min(image.shape)/30)
-        if smooth_kernel_size > 1:
-            pixels = scipy.ndimage.median_filter(image, (smooth_kernel_size, smooth_kernel_size),
+        # Smooth output with median filter
+        SMOOTHING_FACTOR = 0.03
+        smooth_kernel_size = round( min(image.shape) * SMOOTHING_FACTOR )
+        if smooth_kernel_size > 1 and smooth_kernel_size < min(image.shape):
+            pixels = scipy.ndimage.median_filter(image,
+                                                 (smooth_kernel_size, smooth_kernel_size),
                                                  mode='constant')
         else:
             pixels = image
@@ -152,8 +167,13 @@ def convert_to_vector_format(crs, output_dir, resolution,
         mask = pixels == 1
 
         # Tolerance for douglas peucker simplification
-        tol = max(100 * log10(resolution), 0) # TODO: not work with degrees
+        SIMPLIFICATION_FACTOR = 0.3
+        if SIMPLIFICATION_FACTOR > 0:
+            tol = resolution / SIMPLIFICATION_FACTOR
+        else:
+            tol = 0
 
+        # Transformation initialization
         if crs != output_crs:
             tr = Transformer.from_crs(crs, output_crs,
                                       always_xy=is_first_axis_east(output_crs)).transform
@@ -170,15 +190,14 @@ def convert_to_vector_format(crs, output_dir, resolution,
                 shp = shapely_transform(tr, shp)
             feats.append(shp)
 
-
+        # Create multipolygon and add properties to it.
         feature = MultiPolygon(feats)
         result = {'geometry': mapping(feature), 'properties':
                   {'resolution': resolution, 'url': url, 'layer_name': layer_name}}
 
-
-
         results_gpkg = ({'geometry': mapping(f), 'properties': {}} for f in feats)
 
+    # Geojson output
     with fiona.open(
         output_dir + dst_layername + ".geojson", 'w',
         driver="GeoJSON",
@@ -187,13 +206,14 @@ def convert_to_vector_format(crs, output_dir, resolution,
                 {'resolution': 'int', 'url': 'str', 'layer_name': 'str'}},
         VALIDATE_OPEN_OPTIONS=False) as dst:
 
-
+        # GPKG output
         with fiona.open(
             output_dir + dst_layername + ".gpkg", 'w',
             driver="GPKG",
             crs=fiona.crs.from_string(output_crs.to_proj4()) if output_crs else src.crs,
             schema={'geometry': 'Polygon', 'properties': {}}) as gpkg_dst:
 
+            # Write datasets
             if len(feats) > 0:
                 dst.write(result)
                 gpkg_dst.writerecords(results_gpkg)

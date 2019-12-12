@@ -101,15 +101,6 @@ def test_pixel(image):
 
     return True
 
-    '''for i in range(image.shape[0]):
-        for j in range(image.shape[1]):
-            try:
-                if not np.array_equal(image[i][j], first_val):
-                    return True
-            except UnboundLocalError:
-                first_val = image[i][j]
-
-    return False'''
 
 def test_for_var(image):
     """Search for variation within each part of a 3x3 grid of the input image.
@@ -219,7 +210,6 @@ def validate_wfs(url, layer_name, srs, bbox, result_file,\
 
     # Open the webservice
 
-    try_url = "https://geodata.nationaalgeoregister.nl/inspireadressen/v2/wfs?language=dut&SERVICE=WFS&VERSION=2.0.0&SRSNAME=urn:ogc:def:crs:EPSG::28992&BBOX=138857.59757060264,559646.0172022979,258777.14235332562,679565.5619850209"
     #TODO: use version -> if service_version is not None: ...
     req_url = "{}?service=wfs&version=2.0.0&srsName={}&BBOX={}".format(url, srs, bbox)
     logging.info("URL used for validation: {}".format('WFS:' + req_url))
