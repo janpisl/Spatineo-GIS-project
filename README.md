@@ -21,7 +21,7 @@ In the view of the algorithm, the steps are following.
 2. Empty raster is created by the bounding box of the layer in certain resolution.
 3. All requests are compared to the raster, and for each pixel all positive and negative results are counted.
 4. Using the proportion of the negative results, pixels are interpreted as non-data or data ares.
-5. Binary raster is smoothed, converted to the vector format and the final result is simplified and validated.
+5. Binary raster is validates and then converted to the vector format, smoothed and the final result is simplified.
 
 ### File structure
 All source code files are in [src](/src) directory. Example configuration files are provided in [sample_data](/sample_data).
